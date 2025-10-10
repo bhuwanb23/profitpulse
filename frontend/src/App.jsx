@@ -12,6 +12,8 @@ import Register from './pages/Register'
 import { AuthProvider } from './contexts/AuthContext'
 import ProtectedRoute from './components/routing/ProtectedRoute'
 import AIInsights from './pages/AIInsights'
+import ClientServicesPage from './pages/ClientServices'
+import ClientAnalyticsPage from './pages/ClientAnalytics'
 
 function App() {
 	return (
@@ -25,7 +27,9 @@ function App() {
 						<Route element={<Layout />}> 
 							<Route index element={<Dashboard />} />
 							<Route path="dashboard" element={<Dashboard />} />
-							<Route path="clients" element={<Clients />} />
+							<Route path="clients/*" element={<Clients />} />
+							<Route path="client-services/:id?" element={<ClientServicesPage />} />
+							<Route path="client-analytics/:id?" element={<ClientAnalyticsPage />} />
 							<Route path="tickets" element={<Tickets />} />
 							<Route path="invoices" element={<Invoices />} />
 							<Route path="analytics" element={<Analytics />} />
