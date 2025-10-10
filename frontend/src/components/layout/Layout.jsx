@@ -11,6 +11,7 @@ const navItems = [
 	{ to: '/invoices', label: 'Invoices', icon: '💰' },
 	{ to: '/analytics', label: 'Analytics', icon: '📊' },
 	{ to: '/reports', label: 'Reports', icon: '📑' },
+	{ to: '/notifications', label: 'Notifications', icon: '🔔' },
 	{ to: '/billing-analytics', label: 'Billing Analytics', icon: '💹' },
 	{ to: '/budget-management', label: 'Budget Management', icon: '📘' },
 	{ to: '/ai', label: 'AI Insights', icon: '🧠' },

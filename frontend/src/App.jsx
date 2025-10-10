@@ -19,6 +19,7 @@ import TicketOperationsPage from './pages/TicketOperations'
 import BillingAnalyticsPage from './pages/BillingAnalytics'
 import BudgetManagementPage from './pages/BudgetManagement'
 import Reports from './pages/Reports'
+import Notifications from './pages/Notifications'
 
 function App() {
 	return (
@@ -44,6 +45,7 @@ function App() {
 							<Route path="billing-analytics" element={<BillingAnalyticsPage />} />
 							<Route path="budget-management" element={<BudgetManagementPage />} />
 							<Route path="ai" element={<AIInsights />} />
+							<Route path="notifications" element={<Notifications />} />
 							<Route path="settings" element={<Settings />} />
 							<Route path="*" element={<Navigate to="/dashboard" replace />} />
 						</Route>
