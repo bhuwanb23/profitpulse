@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import RevenueLineChart from '../components/charts/RevenueLineChart'
 
 const StatCard = ({ title, value, change, positive }) => (
 	<div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
@@ -19,6 +20,23 @@ export default function Dashboard() {
 		{ title: 'Open Tickets', value: '17', change: '5.1%', positive: false },
 		{ title: 'Profitability', value: '31.2%', change: '1.2%', positive: true },
 	]), [])
+
+	const revenueData = useMemo(() => (
+		[
+			{ label: 'Jan', value: 6400 },
+			{ label: 'Feb', value: 7200 },
+			{ label: 'Mar', value: 8800 },
+			{ label: 'Apr', value: 7600 },
+			{ label: 'May', value: 9100 },
+			{ label: 'Jun', value: 9800 },
+			{ label: 'Jul', value: 10400 },
+			{ label: 'Aug', value: 9900 },
+			{ label: 'Sep', value: 11200 },
+			{ label: 'Oct', value: 12400 },
+			{ label: 'Nov', value: 11800 },
+			{ label: 'Dec', value: 13100 },
+		]
+	), [])
 
 	return (
 		<div className="space-y-6">
@@ -50,9 +68,7 @@ export default function Dashboard() {
 							<option>Last 30 days</option>
 						</select>
 					</div>
-					<div className="mt-4 h-64 grid place-items-center text-gray-400 text-sm bg-[repeating-linear-gradient(0deg,#f9fafb, #f9fafb_12px, #f3f4f6_12px, #f3f4f6_24px)] rounded-lg">
-						Chart placeholder
-					</div>
+					<RevenueLineChart data={revenueData} />
 				</section>
 
 				{/* AI Recommendations */}
