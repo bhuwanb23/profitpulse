@@ -16,6 +16,8 @@ import ClientServicesPage from './pages/ClientServices'
 import ClientAnalyticsPage from './pages/ClientAnalytics'
 import TicketAnalyticsPage from './pages/TicketAnalytics'
 import TicketOperationsPage from './pages/TicketOperations'
+import BillingAnalyticsPage from './pages/BillingAnalytics'
+import BudgetManagementPage from './pages/BudgetManagement'
 
 function App() {
 	return (
@@ -35,8 +37,10 @@ function App() {
 							<Route path="tickets/*" element={<Tickets />} />
 							<Route path="ticket-analytics" element={<TicketAnalyticsPage />} />
 							<Route path="ticket-operations" element={<TicketOperationsPage />} />
-							<Route path="invoices" element={<Invoices />} />
+							<Route path="invoices/*" element={<Invoices />} />
 							<Route path="analytics" element={<Analytics />} />
+							<Route path="billing-analytics" element={<BillingAnalyticsPage />} />
+							<Route path="budget-management" element={<BudgetManagementPage />} />
 							<Route path="ai" element={<AIInsights />} />
 							<Route path="settings" element={<Settings />} />
 							<Route path="*" element={<Navigate to="/dashboard" replace />} />

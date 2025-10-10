@@ -10,6 +10,8 @@ const navItems = [
 	{ to: '/tickets', label: 'Tickets', icon: '🎫' },
 	{ to: '/invoices', label: 'Invoices', icon: '💰' },
 	{ to: '/analytics', label: 'Analytics', icon: '📊' },
+	{ to: '/billing-analytics', label: 'Billing Analytics', icon: '💹' },
+	{ to: '/budget-management', label: 'Budget Management', icon: '📘' },
 	{ to: '/ai', label: 'AI Insights', icon: '🧠' },
 	{ to: '/settings', label: 'Settings', icon: '⚙️' },
 ]
