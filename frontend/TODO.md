@@ -39,8 +39,8 @@ This consolidated checklist replaces all other plan files. Keep this file update
 - [x] Sidebar navigation
 - [x] Header with user menu
 - [x] Mobile responsive navigation
-- [ ] Breadcrumb navigation
-- [ ] Loading states and error boundaries
+- [x] Breadcrumb navigation
+- [x] Loading states and error boundaries
 
 ---
 

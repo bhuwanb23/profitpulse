@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuthContext } from '../../contexts/AuthContext'
+import Breadcrumbs from '../navigation/Breadcrumbs'
+import ErrorBoundary from '../ui/ErrorBoundary'
 
 const navItems = [
 	{ to: '/dashboard', label: 'Dashboard', icon: '🏠' },
@@ -35,7 +37,10 @@ export default function Layout() {
 			</header>
 
 			{/* Body */}
-			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 md:grid-cols-[220px_1fr] gap-6">
+			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+				<Breadcrumbs />
+			</div>
+			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 grid grid-cols-1 md:grid-cols-[220px_1fr] gap-6">
 				{/* Sidebar */}
 				<aside className={`md:sticky md:top-20 md:self-start bg-white border border-gray-200 rounded-lg p-3 h-max ${sidebarOpen ? 'block' : 'hidden'} md:block`}>
 					<nav className="space-y-1">
@@ -54,7 +59,9 @@ export default function Layout() {
 
 				{/* Content */}
 				<main className="space-y-6">
-					<Outlet />
+					<ErrorBoundary>
+						<Outlet />
+					</ErrorBoundary>
 				</main>
 			</div>
 		</div>
