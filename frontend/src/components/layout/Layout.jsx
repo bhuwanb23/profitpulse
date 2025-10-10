@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
+import { useAuthContext } from '../../contexts/AuthContext'
 
 const navItems = [
 	{ to: '/dashboard', label: 'Dashboard', icon: '🏠' },
@@ -12,6 +13,7 @@ const navItems = [
 
 export default function Layout() {
 	const [sidebarOpen, setSidebarOpen] = useState(false)
+	const { user, logout } = useAuthContext()
 
 	return (
 		<div className="min-h-screen bg-gray-50 text-gray-900">
@@ -26,7 +28,8 @@ export default function Layout() {
 					<div className="flex items-center gap-2">
 						<input className="hidden sm:block w-64 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Search..." />
 						<div className="h-8 w-8 grid place-items-center rounded-full bg-gray-100">🔔</div>
-						<div className="h-8 w-8 grid place-items-center rounded-full bg-gray-100">👤</div>
+						<button onClick={logout} className="text-xs px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200">Logout</button>
+						<div className="h-8 w-8 grid place-items-center rounded-full bg-gray-100" title={user?.email || ''}>👤</div>
 					</div>
 				</div>
 			</header>
