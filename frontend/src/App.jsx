@@ -11,6 +11,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import { AuthProvider } from './contexts/AuthContext'
 import ProtectedRoute from './components/routing/ProtectedRoute'
+import AIInsights from './pages/AIInsights'
 
 function App() {
 	return (
@@ -28,6 +29,7 @@ function App() {
 							<Route path="tickets" element={<Tickets />} />
 							<Route path="invoices" element={<Invoices />} />
 							<Route path="analytics" element={<Analytics />} />
+							<Route path="ai" element={<AIInsights />} />
 							<Route path="settings" element={<Settings />} />
 							<Route path="*" element={<Navigate to="/dashboard" replace />} />
 						</Route>

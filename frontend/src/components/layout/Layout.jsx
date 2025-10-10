@@ -10,6 +10,7 @@ const navItems = [
 	{ to: '/tickets', label: 'Tickets', icon: '🎫' },
 	{ to: '/invoices', label: 'Invoices', icon: '💰' },
 	{ to: '/analytics', label: 'Analytics', icon: '📊' },
+	{ to: '/ai', label: 'AI Insights', icon: '🧠' },
 	{ to: '/settings', label: 'Settings', icon: '⚙️' },
 ]
 
