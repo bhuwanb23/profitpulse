@@ -1,10 +1,10 @@
-# SuperHack SQLite Database Setup Script
+# SuperHack SQLite Database Setup - Simple Version
 # This script creates a SQLite database for development and testing
 
 Write-Host "🚀 Setting up SuperHack SQLite Database..." -ForegroundColor Green
 
 # Database configuration
-$DB_FILE = "superhack.db"
+$DB_FILE = "database/superhack.db"
 $SCHEMA_FILE = "database/schemas/sqlite_init.sql"
 $SAMPLE_DATA_FILE = "database/seeds/sqlite_sample_data.sql"
 
@@ -50,8 +50,8 @@ Write-Host "⚙️  Creating environment configuration..." -ForegroundColor Blue
 $envContent = @"
 # Database Configuration (SQLite)
 DB_TYPE=sqlite
-DB_FILE=./superhack.db
-DB_URL=sqlite:./superhack.db
+DB_FILE=./database/superhack.db
+DB_URL=sqlite:./database/superhack.db
 
 # Application Configuration
 NODE_ENV=development

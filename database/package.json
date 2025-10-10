@@ -1,0 +1,12 @@
+{
+  "name": "superhack-db-setup",
+  "version": "1.0.0",
+  "description": "Database setup for SuperHack AI Platform",
+  "main": "create_database.js",
+  "scripts": {
+    "setup-db": "node create_database.js"
+  },
+  "dependencies": {
+    "sqlite3": "^5.1.7"
+  }
+}

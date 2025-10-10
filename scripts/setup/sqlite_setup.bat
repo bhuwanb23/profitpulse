@@ -14,7 +14,7 @@ if %errorlevel% neq 0 (
 echo ✅ SQLite found
 
 REM Database configuration
-set DB_FILE=superhack.db
+set DB_FILE=database/superhack.db
 set SCHEMA_FILE=database/schemas/sqlite_init.sql
 set SAMPLE_DATA_FILE=database/seeds/sqlite_sample_data.sql
 
@@ -48,8 +48,8 @@ REM Create .env file
 (
 echo # Database Configuration ^(SQLite^)
 echo DB_TYPE=sqlite
-echo DB_FILE=./superhack.db
-echo DB_URL=sqlite:./superhack.db
+echo DB_FILE=./database/superhack.db
+echo DB_URL=sqlite:./database/superhack.db
 echo.
 echo # Application Configuration
 echo NODE_ENV=development
