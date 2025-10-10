@@ -1,8 +1,12 @@
 import AIOverview from '../components/ai/AIOverview'
 import LeakAlerts from '../components/ai/LeakAlerts'
 import ProfitabilityScores from '../components/ai/ProfitabilityScores'
-import AIRecommendations from '../components/ai/AIRecommendations'
-import PredictiveCharts from '../components/ai/PredictiveCharts'
+import AIRecommendationPanel from '../components/ai/AIRecommendationPanel'
+import PredictiveAnalytics from '../components/ai/PredictiveAnalytics'
+import ProfitabilityGenome from '../components/ai/ProfitabilityGenome'
+import ServiceOptimization from '../components/ai/ServiceOptimization'
+import PricingRecommendations from '../components/ai/PricingRecommendations'
+import MarketInsights from '../components/ai/MarketInsights'
 
 export default function AIInsights() {
 	return (
@@ -17,8 +21,12 @@ export default function AIInsights() {
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 				<LeakAlerts />
 				<ProfitabilityScores />
-				<AIRecommendations />
-				<PredictiveCharts />
+				<AIRecommendationPanel />
+				<PredictiveAnalytics />
+				<ProfitabilityGenome />
+				<ServiceOptimization />
+				<PricingRecommendations />
+				<MarketInsights />
 			</div>
 		</div>
 	)
