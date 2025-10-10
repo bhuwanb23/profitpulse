@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import RevenueLineChart from '../components/charts/RevenueLineChart'
+import QuickActions from '../components/dashboard/QuickActions'
 
 const StatCard = ({ title, value, change, positive }) => (
 	<div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
@@ -91,6 +92,9 @@ export default function Dashboard() {
 					</ul>
 				</section>
 			</div>
+
+			{/* Quick Actions */}
+			<QuickActions />
 
 			{/* Secondary grid */}
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
