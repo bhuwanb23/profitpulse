@@ -14,6 +14,7 @@ import ProtectedRoute from './components/routing/ProtectedRoute'
 import AIInsights from './pages/AIInsights'
 import ClientServicesPage from './pages/ClientServices'
 import ClientAnalyticsPage from './pages/ClientAnalytics'
+import TicketAnalyticsPage from './pages/TicketAnalytics'
 
 function App() {
 	return (
@@ -30,7 +31,8 @@ function App() {
 							<Route path="clients/*" element={<Clients />} />
 							<Route path="client-services/:id?" element={<ClientServicesPage />} />
 							<Route path="client-analytics/:id?" element={<ClientAnalyticsPage />} />
-							<Route path="tickets" element={<Tickets />} />
+							<Route path="tickets/*" element={<Tickets />} />
+							<Route path="ticket-analytics" element={<TicketAnalyticsPage />} />
 							<Route path="invoices" element={<Invoices />} />
 							<Route path="analytics" element={<Analytics />} />
 							<Route path="ai" element={<AIInsights />} />
