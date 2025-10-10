@@ -1,0 +1,105 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: superhack_postgres
+    environment:
+      POSTGRES_DB: superhack_db
+      POSTGRES_USER: superhack_user
+      POSTGRES_PASSWORD: superhack_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/schemas:/docker-entrypoint-initdb.d
+    networks:
+      - superhack_network
+
+  # Redis for caching and sessions
+  redis:
+    image: redis:7-alpine
+    container_name: superhack_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - superhack_network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: superhack_backend
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=superhack_db
+      - DB_USER=superhack_user
+      - DB_PASSWORD=superhack_password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - superhack_network
+
+  # Frontend React App
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: superhack_frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:3000
+    depends_on:
+      - backend
+    networks:
+      - superhack_network
+
+  # AI/ML Service
+  ai-ml:
+    build:
+      context: ./ai-ml
+      dockerfile: Dockerfile
+    container_name: superhack_ai_ml
+    environment:
+      - FLASK_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=superhack_db
+      - DB_USER=superhack_user
+      - DB_PASSWORD=superhack_password
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./ai-ml:/app
+      - ai_models:/app/models
+    depends_on:
+      - postgres
+    networks:
+      - superhack_network
+
+volumes:
+  postgres_data:
+  redis_data:
+  ai_models:
+
+networks:
+  superhack_network:
+    driver: bridge
