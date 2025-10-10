@@ -1,4 +1,4 @@
-# SuperHack Database Setup Script for Windows PowerShell
+# SuperHack Database Setup Script - Simple Version
 # This script sets up the PostgreSQL database for the SuperHack AI Platform
 
 Write-Host "🚀 Setting up SuperHack Database..." -ForegroundColor Green
@@ -15,8 +15,6 @@ try {
 
 # Database configuration
 $DB_NAME = "superhack_db"
-$DB_USER = "superhack_user"
-$DB_PASSWORD = "superhack_password"
 
 Write-Host "📊 Creating database: $DB_NAME" -ForegroundColor Blue
 
@@ -28,16 +26,6 @@ try {
     Write-Host "⚠️  Database might already exist or error occurred" -ForegroundColor Yellow
 }
 
-# Create user (optional, can use default postgres user)
-Write-Host "👤 Setting up database user..." -ForegroundColor Blue
-try {
-    psql -d $DB_NAME -c "CREATE USER $DB_USER WITH PASSWORD `'$DB_PASSWORD`';"
-    psql -d $DB_NAME -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;"
-    Write-Host "✅ Database user created successfully" -ForegroundColor Green
-} catch {
-    Write-Host "⚠️  User might already exist" -ForegroundColor Yellow
-}
-
 # Run schema
 Write-Host "📋 Applying database schema..." -ForegroundColor Blue
 try {
@@ -45,6 +33,7 @@ try {
     Write-Host "✅ Database schema applied successfully" -ForegroundColor Green
 } catch {
     Write-Host "❌ Error applying schema" -ForegroundColor Red
+    Write-Host "Make sure you're in the project root directory" -ForegroundColor Yellow
     exit 1
 }
 
@@ -62,19 +51,20 @@ if ($loadSampleData -eq "y" -or $loadSampleData -eq "Y") {
 
 # Create .env file for database connection
 Write-Host "⚙️  Creating environment configuration..." -ForegroundColor Blue
+
 $envContent = @"
 # Database Configuration
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=$DB_NAME
-DB_USER=$DB_USER
-DB_PASSWORD=$DB_PASSWORD
-DB_URL=postgresql://$DB_USER`:$DB_PASSWORD@localhost:5432/$DB_NAME
+DB_NAME=superhack_db
+DB_USER=postgres
+DB_PASSWORD=your_postgres_password
+DB_URL=postgresql://postgres:your_postgres_password@localhost:5432/superhack_db
 
 # Application Configuration
 NODE_ENV=development
 PORT=3000
-JWT_SECRET=your_jwt_secret_key_here
+JWT_SECRET=your_jwt_secret_key_here_change_this_in_production
 JWT_EXPIRES_IN=7d
 
 # AI/ML Configuration
@@ -92,7 +82,8 @@ Write-Host "✅ Environment file created" -ForegroundColor Green
 
 Write-Host "🎉 Database setup completed successfully!" -ForegroundColor Green
 Write-Host "📝 Next steps:" -ForegroundColor Yellow
-Write-Host "   1. Update .env file with your actual API keys" -ForegroundColor White
-Write-Host "   2. Start the backend: cd backend && npm start" -ForegroundColor White
-Write-Host "   3. Start the frontend: cd frontend && npm run dev" -ForegroundColor White
-Write-Host "   4. Start the AI/ML service: cd ai-ml && python app.py" -ForegroundColor White
+Write-Host "   1. Update .env file with your actual PostgreSQL password" -ForegroundColor White
+Write-Host "   2. Update .env file with your API keys" -ForegroundColor White
+Write-Host "   3. Start the backend: cd backend && npm start" -ForegroundColor White
+Write-Host "   4. Start the frontend: cd frontend && npm run dev" -ForegroundColor White
+Write-Host "   5. Start the AI/ML service: cd ai-ml && python app.py" -ForegroundColor White
