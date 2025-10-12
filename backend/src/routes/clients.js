@@ -1,13 +1,72 @@
-const express = require('express');
-const router = express.Router();
+const express = require('express')
+const router = express.Router()
+const {
+  getClients,
+  createClient,
+  getClientById,
+  updateClient,
+  deleteClient,
+  getClientServices,
+  getClientAnalytics,
+  getClientProfitability
+} = require('../controllers/clientController')
+const {
+  createClientValidation,
+  updateClientValidation,
+  clientIdValidation,
+  getClientsValidation,
+  getClientServicesValidation,
+  getClientAnalyticsValidation,
+  getClientProfitabilityValidation
+} = require('../validators/clientValidator')
+const { requireRole } = require('../middleware/rbac')
 
-// Placeholder client routes - will be implemented in Phase 2.3
-router.get('/test', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Client routes are working',
-    timestamp: new Date().toISOString()
-  });
-});
+// GET /api/clients - List clients with filters
+router.get('/', 
+  getClientsValidation,
+  getClients
+)
 
-module.exports = router;
+// POST /api/clients - Create new client
+router.post('/', 
+  createClientValidation,
+  createClient
+)
+
+// GET /api/clients/:id - Get client details
+router.get('/:id', 
+  clientIdValidation,
+  getClientById
+)
+
+// PUT /api/clients/:id - Update client
+router.put('/:id', 
+  updateClientValidation,
+  updateClient
+)
+
+// DELETE /api/clients/:id - Delete client
+router.delete('/:id', 
+  clientIdValidation,
+  deleteClient
+)
+
+// GET /api/clients/:id/services - Get client services
+router.get('/:id/services', 
+  getClientServicesValidation,
+  getClientServices
+)
+
+// GET /api/clients/:id/analytics - Get client analytics
+router.get('/:id/analytics', 
+  getClientAnalyticsValidation,
+  getClientAnalytics
+)
+
+// GET /api/clients/:id/profitability - Get client profitability
+router.get('/:id/profitability', 
+  getClientProfitabilityValidation,
+  getClientProfitability
+)
+
+module.exports = router

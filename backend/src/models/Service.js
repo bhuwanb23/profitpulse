@@ -16,6 +16,14 @@ const Service = sequelize.define('Service', {
       key: 'id'
     }
   },
+  client_id: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    references: {
+      model: 'clients',
+      key: 'id'
+    }
+  },
   name: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -31,7 +39,21 @@ const Service = sequelize.define('Service', {
     type: DataTypes.STRING,
     allowNull: true
   },
+  type: {
+    type: DataTypes.ENUM('basic', 'premium', 'enterprise', 'custom'),
+    defaultValue: 'basic',
+    allowNull: false
+  },
+  status: {
+    type: DataTypes.ENUM('active', 'inactive', 'suspended', 'terminated'),
+    defaultValue: 'active',
+    allowNull: false
+  },
   base_price: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  monthly_cost: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: true
   },

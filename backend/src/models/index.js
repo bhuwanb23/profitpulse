@@ -44,6 +44,7 @@ User.hasMany(Ticket, { foreignKey: 'assigned_to', as: 'assignedTickets' });
 
 // Client associations
 Client.belongsTo(Organization, { foreignKey: 'organization_id', as: 'organization' });
+Client.hasMany(Service, { foreignKey: 'client_id', as: 'services' });
 Client.hasMany(Ticket, { foreignKey: 'client_id', as: 'tickets' });
 Client.hasMany(Invoice, { foreignKey: 'client_id', as: 'invoices' });
 Client.hasMany(Expense, { foreignKey: 'client_id', as: 'expenses' });
@@ -52,6 +53,7 @@ Client.hasMany(AIRecommendation, { foreignKey: 'client_id', as: 'aiRecommendatio
 
 // Service associations
 Service.belongsTo(Organization, { foreignKey: 'organization_id', as: 'organization' });
+Service.belongsTo(Client, { foreignKey: 'client_id', as: 'client' });
 
 // Ticket associations
 Ticket.belongsTo(Organization, { foreignKey: 'organization_id', as: 'organization' });

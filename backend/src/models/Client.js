@@ -34,19 +34,60 @@ const Client = sequelize.define('Client', {
     type: DataTypes.STRING,
     allowNull: true
   },
+  company: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  contact_person: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   address: {
     type: DataTypes.TEXT,
+    allowNull: true
+  },
+  city: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  state: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  zip_code: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  country: {
+    type: DataTypes.STRING,
     allowNull: true
   },
   industry: {
     type: DataTypes.STRING,
     allowNull: true
   },
+  status: {
+    type: DataTypes.ENUM('active', 'inactive', 'suspended', 'terminated'),
+    defaultValue: 'active',
+    allowNull: false
+  },
   contract_type: {
     type: DataTypes.ENUM('monthly', 'annual', 'project'),
     allowNull: true
   },
   contract_value: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: true
+  },
+  contract_start_date: {
+    type: DataTypes.DATEONLY,
+    allowNull: true
+  },
+  contract_end_date: {
+    type: DataTypes.DATEONLY,
+    allowNull: true
+  },
+  monthly_budget: {
     type: DataTypes.DECIMAL(12, 2),
     allowNull: true
   },
