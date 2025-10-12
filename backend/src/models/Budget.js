@@ -52,6 +52,26 @@ const Budget = sequelize.define('Budget', {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
     allowNull: false
+  },
+  categories: {
+    type: DataTypes.JSON,
+    allowNull: true
+  },
+  alert_thresholds: {
+    type: DataTypes.JSON,
+    allowNull: true
+  },
+  created_by: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
+  },
+  notes: {
+    type: DataTypes.TEXT,
+    allowNull: true
   }
 }, {
   tableName: 'budgets',
