@@ -103,6 +103,22 @@ const Ticket = sequelize.define('Ticket', {
   last_activity: {
     type: DataTypes.DATE,
     allowNull: true
+  },
+  escalated_at: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  escalation_reason: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  escalated_to: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
   }
 }, {
   tableName: 'tickets',
