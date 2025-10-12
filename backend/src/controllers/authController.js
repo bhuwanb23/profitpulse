@@ -1,5 +1,4 @@
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const { User } = require('../models');
 const { validationResult } = require('express-validator');
 
@@ -53,19 +52,6 @@ const register = async (req, res) => {
     });
     console.log('User created successfully:', user.email);
 
-    // Generate JWT token
-    console.log('Generating JWT token...');
-    const token = jwt.sign(
-      { 
-        userId: user.id, 
-        email: user.email, 
-        role: user.role 
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
-    console.log('JWT token generated successfully');
-
     // Return user data (without password)
     res.status(201).json({
       success: true,
@@ -79,8 +65,7 @@ const register = async (req, res) => {
           role: user.role,
           isActive: user.is_active,
           createdAt: user.created_at
-        },
-        token
+        }
       }
     });
 
@@ -136,17 +121,6 @@ const login = async (req, res) => {
       });
     }
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { 
-        userId: user.id, 
-        email: user.email, 
-        role: user.role 
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
-
     // Return user data (without password)
     res.json({
       success: true,
@@ -160,8 +134,7 @@ const login = async (req, res) => {
           role: user.role,
           isActive: user.is_active,
           createdAt: user.created_at
-        },
-        token
+        }
       }
     });
 
@@ -175,11 +148,20 @@ const login = async (req, res) => {
 };
 
 /**
- * Get current user profile
+ * Get current user profile (simplified - no auth required for testing)
  */
 const getProfile = async (req, res) => {
   try {
-    const user = await User.findByPk(req.user.userId, {
+    const { userId } = req.params;
+    
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID required'
+      });
+    }
+
+    const user = await User.findByPk(userId, {
       attributes: { exclude: ['password_hash'] }
     });
 
@@ -226,11 +208,13 @@ const logout = async (req, res) => {
 };
 
 /**
- * Refresh JWT token
+ * Simple user verification (no JWT needed)
  */
-const refreshToken = async (req, res) => {
+const verifyUser = async (req, res) => {
   try {
-    const user = await User.findByPk(req.user.userId);
+    const { userId } = req.params;
+    
+    const user = await User.findByPk(userId);
     
     if (!user || !user.is_active) {
       return res.status(401).json({
@@ -239,24 +223,136 @@ const refreshToken = async (req, res) => {
       });
     }
 
-    // Generate new JWT token
-    const token = jwt.sign(
-      { 
-        userId: user.id, 
-        email: user.email, 
-        role: user.role 
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
-
     res.json({
       success: true,
-      data: { token }
+      message: 'User verified',
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.first_name,
+          lastName: user.last_name,
+          role: user.role,
+          isActive: user.is_active
+        }
+      }
     });
 
   } catch (error) {
-    console.error('Token refresh error:', error);
+    console.error('User verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+/**
+ * Simple password reset request
+ */
+const requestPasswordReset = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res.json({
+        success: true,
+        message: 'If the email exists, a password reset link has been sent'
+      });
+    }
+
+    // In production, send email with reset link
+    console.log(`Password reset requested for: ${email}`);
+
+    res.json({
+      success: true,
+      message: 'If the email exists, a password reset link has been sent'
+    });
+
+  } catch (error) {
+    console.error('Password reset request error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+/**
+ * Simple password reset (no token needed for testing)
+ */
+const resetPassword = async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Hash new password
+    const saltRounds = 12;
+    const passwordHash = await bcrypt.hash(newPassword, saltRounds);
+
+    // Update password
+    await user.update({ password_hash: passwordHash });
+
+    res.json({
+      success: true,
+      message: 'Password reset successfully'
+    });
+
+  } catch (error) {
+    console.error('Password reset error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+/**
+ * Change password (simplified for testing)
+ */
+const changePassword = async (req, res) => {
+  try {
+    const { userId, currentPassword, newPassword } = req.body;
+    const user = await User.findByPk(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Verify current password
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!isCurrentPasswordValid) {
+      return res.status(400).json({
+        success: false,
+        message: 'Current password is incorrect'
+      });
+    }
+
+    // Hash new password
+    const saltRounds = 12;
+    const passwordHash = await bcrypt.hash(newPassword, saltRounds);
+
+    // Update password
+    await user.update({ password_hash: passwordHash });
+
+    res.json({
+      success: true,
+      message: 'Password changed successfully'
+    });
+
+  } catch (error) {
+    console.error('Change password error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -269,5 +365,8 @@ module.exports = {
   login,
   getProfile,
   logout,
-  refreshToken
+  verifyUser,
+  requestPasswordReset,
+  resetPassword,
+  changePassword
 };

@@ -5,22 +5,29 @@ const {
   login, 
   getProfile, 
   logout, 
-  refreshToken 
+  verifyUser,
+  requestPasswordReset,
+  resetPassword,
+  changePassword
 } = require('../controllers/authController');
-const { authenticateToken } = require('../middleware/auth');
 const { 
   registerValidation, 
   loginValidation 
 } = require('../validators/authValidator');
 
 // Public routes
-router.post('/register', register);
+router.post('/register', registerValidation, register);
 router.post('/login', loginValidation, login);
 
-// Protected routes
-router.get('/profile', authenticateToken, getProfile);
-router.post('/logout', authenticateToken, logout);
-router.post('/refresh', authenticateToken, refreshToken);
+// Password reset routes (public)
+router.post('/forgot-password', requestPasswordReset);
+router.post('/reset-password', resetPassword);
+
+// User routes (simplified for testing)
+router.get('/profile/:userId', getProfile);
+router.get('/verify/:userId', verifyUser);
+router.post('/logout', logout);
+router.post('/change-password', changePassword);
 
 // Test route
 router.get('/test', (req, res) => {
