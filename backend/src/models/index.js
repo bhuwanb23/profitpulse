@@ -11,6 +11,9 @@ const Budget = require('./Budget');
 const Expense = require('./Expense');
 const AIAnalytics = require('./AIAnalytics');
 const AIRecommendation = require('./AIRecommendation');
+const Report = require('./Report');
+const ReportTemplate = require('./ReportTemplate');
+const ScheduledReport = require('./ScheduledReport');
 
 // Initialize models
 const models = {
@@ -23,7 +26,10 @@ const models = {
   Budget,
   Expense,
   AIAnalytics,
-  AIRecommendation
+  AIRecommendation,
+  Report,
+  ReportTemplate,
+  ScheduledReport
 };
 
 // Define associations
@@ -37,6 +43,9 @@ Organization.hasMany(Budget, { foreignKey: 'organization_id', as: 'budgets' });
 Organization.hasMany(Expense, { foreignKey: 'organization_id', as: 'expenses' });
 Organization.hasMany(AIAnalytics, { foreignKey: 'organization_id', as: 'aiAnalytics' });
 Organization.hasMany(AIRecommendation, { foreignKey: 'organization_id', as: 'aiRecommendations' });
+Organization.hasMany(Report, { foreignKey: 'organization_id', as: 'reports' });
+Organization.hasMany(ReportTemplate, { foreignKey: 'organization_id', as: 'reportTemplates' });
+Organization.hasMany(ScheduledReport, { foreignKey: 'organization_id', as: 'scheduledReports' });
 
 // User associations
 User.belongsTo(Organization, { foreignKey: 'organization_id', as: 'organization' });
@@ -44,6 +53,9 @@ User.hasMany(Ticket, { foreignKey: 'assigned_to', as: 'assignedTickets' });
 User.hasMany(Ticket, { foreignKey: 'created_by', as: 'createdTickets' });
 User.hasMany(Invoice, { foreignKey: 'created_by', as: 'createdInvoices' });
 User.hasMany(Budget, { foreignKey: 'created_by', as: 'createdBudgets' });
+User.hasMany(Report, { foreignKey: 'created_by', as: 'createdReports' });
+User.hasMany(ReportTemplate, { foreignKey: 'created_by', as: 'createdReportTemplates' });
+User.hasMany(ScheduledReport, { foreignKey: 'created_by', as: 'createdScheduledReports' });
 
 // Client associations
 Client.belongsTo(Organization, { foreignKey: 'organization_id', as: 'organization' });
@@ -88,6 +100,21 @@ AIAnalytics.belongsTo(Client, { foreignKey: 'client_id', as: 'client' });
 // AI Recommendation associations
 AIRecommendation.belongsTo(Organization, { foreignKey: 'organization_id', as: 'organization' });
 AIRecommendation.belongsTo(Client, { foreignKey: 'client_id', as: 'client' });
+
+// Report associations
+Report.belongsTo(Organization, { foreignKey: 'organization_id', as: 'organization' });
+Report.belongsTo(ReportTemplate, { foreignKey: 'template_id', as: 'template' });
+Report.belongsTo(User, { foreignKey: 'created_by', as: 'createdByUser' });
+
+// Report Template associations
+ReportTemplate.belongsTo(Organization, { foreignKey: 'organization_id', as: 'organization' });
+ReportTemplate.belongsTo(User, { foreignKey: 'created_by', as: 'createdByUser' });
+
+// Scheduled Report associations
+ScheduledReport.belongsTo(Organization, { foreignKey: 'organization_id', as: 'organization' });
+ScheduledReport.belongsTo(Report, { foreignKey: 'report_id', as: 'report' });
+ScheduledReport.belongsTo(ReportTemplate, { foreignKey: 'template_id', as: 'template' });
+ScheduledReport.belongsTo(User, { foreignKey: 'created_by', as: 'createdByUser' });
 
 // Export models and sequelize instance
 module.exports = {
