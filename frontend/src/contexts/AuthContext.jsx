@@ -1,13 +1,12 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import api from '../services/api'
 
-const STORAGE_KEY = 'token'
+const STORAGE_KEY = 'user'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
 	const [user, setUser] = useState(null)
-	const [token, setToken] = useState(localStorage.getItem(STORAGE_KEY) || null)
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState(null)
 
@@ -15,32 +14,44 @@ export function AuthProvider({ children }) {
 		async function bootstrap() {
 			try {
 				setLoading(true)
-				if (token) {
-					// Fetch user profile from backend
-					const { data } = await api.get('/auth/profile')
-					setUser(data.data.user)
+				const storedUser = localStorage.getItem(STORAGE_KEY)
+				if (storedUser) {
+					const userData = JSON.parse(storedUser)
+					setUser(userData)
+					// Verify user is still valid by checking profile
+					try {
+						const { data } = await api.get(`/auth/profile/${userData.id}`)
+						setUser(data.data.user)
+					} catch (e) {
+						// User might be invalid, clear it
+						localStorage.removeItem(STORAGE_KEY)
+						setUser(null)
+					}
 				}
 			} catch (e) {
-				// Token might be invalid, clear it
+				// Clear invalid data
 				localStorage.removeItem(STORAGE_KEY)
-				setToken(null)
 				setUser(null)
 			} finally {
 				setLoading(false)
 			}
 		}
 		bootstrap()
-	}, [token])
+	}, [])
 
 	const login = async (credentials) => {
 		setError(null)
 		try {
+			console.log('Login attempt with:', credentials)
+			console.log('API base URL:', api.defaults.baseURL)
 			const { data } = await api.post('/auth/login', credentials)
-			localStorage.setItem(STORAGE_KEY, data.data.token)
-			setToken(data.data.token)
+			console.log('Login successful:', data)
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(data.data.user))
 			setUser(data.data.user)
 			return { ok: true }
 		} catch (e) {
+			console.error('Login failed:', e)
+			console.error('Error response:', e?.response?.data)
 			setError(e?.response?.data?.message || 'Login failed')
 			return { ok: false, error: e }
 		}
@@ -50,8 +61,7 @@ export function AuthProvider({ children }) {
 		setError(null)
 		try {
 			const { data } = await api.post('/auth/register', payload)
-			localStorage.setItem(STORAGE_KEY, data.data.token)
-			setToken(data.data.token)
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(data.data.user))
 			setUser(data.data.user)
 			return { ok: true }
 		} catch (e) {
@@ -62,11 +72,10 @@ export function AuthProvider({ children }) {
 
 	const logout = () => {
 		localStorage.removeItem(STORAGE_KEY)
-		setToken(null)
 		setUser(null)
 	}
 
-	const value = useMemo(() => ({ user, token, loading, error, login, register, logout }), [user, token, loading, error])
+	const value = useMemo(() => ({ user, loading, error, login, register, logout }), [user, loading, error])
 
 	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
