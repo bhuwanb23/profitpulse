@@ -69,7 +69,7 @@ const connectDatabase = async () => {
     
     // Sync database in development
     if (process.env.NODE_ENV !== 'production') {
-      await sequelize.sync({ alter: true });
+      await sequelize.sync({ force: false });
       logger.info('✅ Database synchronized');
     }
     

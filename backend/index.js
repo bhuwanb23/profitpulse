@@ -94,16 +94,12 @@ app.use(morgan('combined', {
   }
 }));
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development',
-    version: process.env.npm_package_version || '1.0.0'
-  });
-});
+// Import health controller
+const { getSystemHealth, getDatabaseHealth } = require('./src/controllers/healthController');
+
+// Health check endpoints
+app.get('/health', getSystemHealth);
+app.get('/health/database', getDatabaseHealth);
 
 // API routes
 app.use('/api/auth', authRoutes);

@@ -16,10 +16,14 @@ export function AuthProvider({ children }) {
 			try {
 				setLoading(true)
 				if (token) {
-					// Optionally fetch profile
-					setUser({ email: 'user@example.com' })
+					// Fetch user profile from backend
+					const { data } = await api.get('/auth/profile')
+					setUser(data.data.user)
 				}
 			} catch (e) {
+				// Token might be invalid, clear it
+				localStorage.removeItem(STORAGE_KEY)
+				setToken(null)
 				setUser(null)
 			} finally {
 				setLoading(false)
@@ -31,12 +35,10 @@ export function AuthProvider({ children }) {
 	const login = async (credentials) => {
 		setError(null)
 		try {
-			// const { data } = await api.post('/auth/login', credentials)
-			// Mocked response for now
-			const data = { token: 'mock-token', user: { email: credentials.email } }
-			localStorage.setItem(STORAGE_KEY, data.token)
-			setToken(data.token)
-			setUser(data.user)
+			const { data } = await api.post('/auth/login', credentials)
+			localStorage.setItem(STORAGE_KEY, data.data.token)
+			setToken(data.data.token)
+			setUser(data.data.user)
 			return { ok: true }
 		} catch (e) {
 			setError(e?.response?.data?.message || 'Login failed')
@@ -47,11 +49,10 @@ export function AuthProvider({ children }) {
 	const register = async (payload) => {
 		setError(null)
 		try {
-			// const { data } = await api.post('/auth/register', payload)
-			const data = { token: 'mock-token', user: { email: payload.email } }
-			localStorage.setItem(STORAGE_KEY, data.token)
-			setToken(data.token)
-			setUser(data.user)
+			const { data } = await api.post('/auth/register', payload)
+			localStorage.setItem(STORAGE_KEY, data.data.token)
+			setToken(data.data.token)
+			setUser(data.data.user)
 			return { ok: true }
 		} catch (e) {
 			setError(e?.response?.data?.message || 'Registration failed')
