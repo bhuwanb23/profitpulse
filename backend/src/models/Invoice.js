@@ -58,6 +58,42 @@ const Invoice = sequelize.define('Invoice', {
   payment_date: {
     type: DataTypes.DATEONLY,
     allowNull: true
+  },
+  payment_method: {
+    type: DataTypes.ENUM('cash', 'check', 'credit_card', 'bank_transfer', 'paypal', 'other'),
+    allowNull: true
+  },
+  payment_reference: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  notes: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  terms: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  sent_at: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  sent_to_email: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  created_by: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
+  },
+  line_items: {
+    type: DataTypes.JSON,
+    allowNull: true
   }
 }, {
   tableName: 'invoices',

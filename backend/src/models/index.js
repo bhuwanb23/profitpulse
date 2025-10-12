@@ -42,6 +42,7 @@ Organization.hasMany(AIRecommendation, { foreignKey: 'organization_id', as: 'aiR
 User.belongsTo(Organization, { foreignKey: 'organization_id', as: 'organization' });
 User.hasMany(Ticket, { foreignKey: 'assigned_to', as: 'assignedTickets' });
 User.hasMany(Ticket, { foreignKey: 'created_by', as: 'createdTickets' });
+User.hasMany(Invoice, { foreignKey: 'created_by', as: 'createdInvoices' });
 
 // Client associations
 Client.belongsTo(Organization, { foreignKey: 'organization_id', as: 'organization' });
@@ -65,6 +66,7 @@ Ticket.belongsTo(User, { foreignKey: 'created_by', as: 'createdByUser' });
 // Invoice associations
 Invoice.belongsTo(Organization, { foreignKey: 'organization_id', as: 'organization' });
 Invoice.belongsTo(Client, { foreignKey: 'client_id', as: 'client' });
+Invoice.belongsTo(User, { foreignKey: 'created_by', as: 'createdByUser' });
 
 // Budget associations
 Budget.belongsTo(Organization, { foreignKey: 'organization_id', as: 'organization' });
