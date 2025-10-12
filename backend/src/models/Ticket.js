@@ -41,12 +41,12 @@ const Ticket = sequelize.define('Ticket', {
     allowNull: true
   },
   priority: {
-    type: DataTypes.ENUM('low', 'medium', 'high', 'critical'),
+    type: DataTypes.ENUM('low', 'medium', 'high', 'urgent', 'critical'),
     defaultValue: 'medium',
     allowNull: false
   },
   status: {
-    type: DataTypes.ENUM('open', 'in_progress', 'resolved', 'closed'),
+    type: DataTypes.ENUM('open', 'in_progress', 'pending', 'resolved', 'closed', 'cancelled'),
     defaultValue: 'open',
     allowNull: false
   },
@@ -77,6 +77,30 @@ const Ticket = sequelize.define('Ticket', {
     allowNull: true
   },
   resolved_at: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  due_date: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  estimated_hours: {
+    type: DataTypes.DECIMAL(8, 2),
+    allowNull: true
+  },
+  resolution_notes: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  created_by: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
+  },
+  last_activity: {
     type: DataTypes.DATE,
     allowNull: true
   }
