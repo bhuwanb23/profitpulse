@@ -17,19 +17,22 @@ export default function Breadcrumbs() {
 	const items = segments[0] === '' ? [''] : segments
 
 	return (
-		<nav className="text-sm text-gray-500" aria-label="Breadcrumb">
-			<ol className="flex items-center gap-2 flex-wrap">
+		<nav style={{ fontSize: '14px', color: '#6b7280' }} aria-label="Breadcrumb">
+			<ol style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
 				{items.map((seg, idx) => {
 					const to = '/' + items.slice(0, idx + 1).filter(Boolean).join('/')
 					const isLast = idx === items.length - 1
 					const label = labelMap[seg] || (seg.charAt(0).toUpperCase() + seg.slice(1))
 					return (
-						<li key={to} className="flex items-center gap-2">
-							{idx > 0 && <span className="text-gray-300">/</span>}
+						<li key={to} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+							{idx > 0 && <span style={{ color: '#d1d5db' }}>/</span>}
 							{isLast ? (
-								<span className="text-gray-700">{label}</span>
+								<span style={{ color: '#374151' }}>{label}</span>
 							) : (
-								<NavLink to={to || '/dashboard'} className="hover:text-gray-700">
+								<NavLink 
+									to={to || '/dashboard'} 
+									style={{ color: '#6b7280', textDecoration: 'none' }}
+								>
 									{label}
 								</NavLink>
 							)}

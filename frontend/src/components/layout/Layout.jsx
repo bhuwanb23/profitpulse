@@ -24,39 +24,69 @@ export default function Layout() {
 	const { user, logout } = useAuthContext()
 
 	return (
-		<div className="min-h-screen bg-gray-50 text-gray-900 pb-16">
+		<div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', color: '#111827', paddingBottom: '64px' }}>
 			{/* Header */}
-			<header className="sticky top-0 z-30 bg-white/80 backdrop-blur border-b border-gray-200">
-				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-					<button className="md:hidden p-2 rounded hover:bg-gray-100" onClick={() => setSidebarOpen((s) => !s)} aria-label="Toggle sidebar">☰</button>
-					<div className="flex items-center gap-3">
-						<div className="h-8 w-8 rounded bg-blue-600 text-white grid place-items-center font-bold">SH</div>
-						<span className="font-semibold">SuperHack</span>
+			<header style={{ position: 'sticky', top: 0, zIndex: 30, backgroundColor: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(10px)', borderBottom: '1px solid #e5e7eb' }}>
+				<div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 16px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+					<button 
+						style={{ display: 'none', padding: '8px', borderRadius: '4px', backgroundColor: 'transparent', border: 'none', cursor: 'pointer' }}
+						onClick={() => setSidebarOpen((s) => !s)} 
+						aria-label="Toggle sidebar"
+					>
+						☰
+					</button>
+					<div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+						<div style={{ height: '32px', width: '32px', borderRadius: '4px', backgroundColor: '#2563eb', color: 'white', display: 'grid', placeItems: 'center', fontWeight: 'bold' }}>SH</div>
+						<span style={{ fontWeight: '600' }}>SuperHack</span>
 					</div>
-					<div className="flex items-center gap-2">
-						<input className="hidden sm:block w-64 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Search..." />
-						<div className="h-8 w-8 grid place-items-center rounded-full bg-gray-100">🔔</div>
-						<button onClick={logout} className="text-xs px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200">Logout</button>
-						<div className="h-8 w-8 grid place-items-center rounded-full bg-gray-100" title={user?.email || ''}>👤</div>
+					<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+						<input 
+							style={{ display: 'none', width: '256px', borderRadius: '6px', border: '1px solid #d1d5db', padding: '6px 12px', fontSize: '14px' }}
+							placeholder="Search..." 
+						/>
+						<div style={{ height: '32px', width: '32px', display: 'grid', placeItems: 'center', borderRadius: '50%', backgroundColor: '#f3f4f6' }}>🔔</div>
+						<button 
+							onClick={logout} 
+							style={{ fontSize: '12px', padding: '6px 12px', borderRadius: '4px', backgroundColor: '#f3f4f6', border: 'none', cursor: 'pointer' }}
+						>
+							Logout
+						</button>
+						<div 
+							style={{ height: '32px', width: '32px', display: 'grid', placeItems: 'center', borderRadius: '50%', backgroundColor: '#f3f4f6' }} 
+							title={user?.email || ''}
+						>
+							👤
+						</div>
 					</div>
 				</div>
 			</header>
 
 			{/* Body */}
-			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+			<div style={{ maxWidth: '1280px', margin: '0 auto', padding: '16px' }}>
 				<Breadcrumbs />
 			</div>
-			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 grid grid-cols-1 md:grid-cols-[220px_1fr] gap-6">
+			<div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 16px 24px', display: 'grid', gridTemplateColumns: '220px 1fr', gap: '24px' }}>
 				{/* Sidebar */}
-				<aside className={`md:sticky md:top-20 md:self-start bg-white border border-gray-200 rounded-lg p-3 h-max ${sidebarOpen ? 'block' : 'hidden'} md:block`}>
-					<nav className="space-y-1">
+				<aside style={{ position: 'sticky', top: '80px', alignSelf: 'start', backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '12px', height: 'max-content' }}>
+					<nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
 						{navItems.map((item) => (
 							<NavLink
 								key={item.to}
 								to={item.to}
-								className={({ isActive }) => `flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${isActive ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'hover:bg-gray-50'}`}
+								style={({ isActive }) => ({
+									display: 'flex',
+									alignItems: 'center',
+									gap: '8px',
+									padding: '8px 12px',
+									borderRadius: '6px',
+									fontSize: '14px',
+									textDecoration: 'none',
+									color: isActive ? '#1d4ed8' : '#374151',
+									backgroundColor: isActive ? '#eff6ff' : 'transparent',
+									border: isActive ? '1px solid #bfdbfe' : '1px solid transparent'
+								})}
 							>
-								<span className="text-base">{item.icon}</span>
+								<span style={{ fontSize: '16px' }}>{item.icon}</span>
 								<span>{item.label}</span>
 							</NavLink>
 						))}
@@ -64,7 +94,7 @@ export default function Layout() {
 				</aside>
 
 				{/* Content */}
-				<main className="space-y-6">
+				<main style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 					<ErrorBoundary>
 						<Outlet />
 					</ErrorBoundary>

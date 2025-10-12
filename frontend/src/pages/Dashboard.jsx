@@ -1,13 +1,19 @@
 import { useMemo } from 'react'
-import RevenueLineChart from '../components/charts/RevenueLineChart'
-import QuickActions from '../components/dashboard/QuickActions'
+// import RevenueLineChart from '../components/charts/RevenueLineChart'
+// import QuickActions from '../components/dashboard/QuickActions'
 
 const StatCard = ({ title, value, change, positive }) => (
-	<div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-		<div className="text-sm text-gray-500">{title}</div>
-		<div className="mt-2 flex items-end justify-between">
-			<div className="text-2xl font-semibold">{value}</div>
-			<div className={`text-xs px-2 py-1 rounded-md ${positive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+	<div style={{ backgroundColor: 'white', borderRadius: '12px', border: '1px solid #e5e7eb', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '16px' }}>
+		<div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>{title}</div>
+		<div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+			<div style={{ fontSize: '24px', fontWeight: '600' }}>{value}</div>
+			<div style={{ 
+				fontSize: '12px', 
+				padding: '4px 8px', 
+				borderRadius: '6px', 
+				backgroundColor: positive ? '#dcfce7' : '#fef2f2', 
+				color: positive ? '#166534' : '#dc2626' 
+			}}>
 				{positive ? '▲' : '▼'} {change}
 			</div>
 		</div>
@@ -15,6 +21,9 @@ const StatCard = ({ title, value, change, positive }) => (
 )
 
 export default function Dashboard() {
+	console.log('Dashboard component is rendering!')
+	console.log('Dashboard: Current URL =', window.location.href)
+	
 	const stats = useMemo(() => ([
 		{ title: 'Total Revenue', value: '$88,400', change: '12.4%', positive: true },
 		{ title: 'Active Clients', value: '42', change: '3.8%', positive: true },
@@ -40,18 +49,23 @@ export default function Dashboard() {
 	), [])
 
 	return (
-		<div className="space-y-6">
+		<div style={{ padding: '20px', backgroundColor: '#f0f0f0' }}>
+			{/* Test Message */}
+			<div style={{ backgroundColor: '#d4edda', border: '1px solid #c3e6cb', color: '#155724', padding: '12px', borderRadius: '4px', marginBottom: '20px' }}>
+				✅ Dashboard is working! You are logged in successfully.
+			</div>
+			
 			{/* Title */}
-			<div className="flex items-center justify-between">
+			<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
 				<div>
-					<h1 className="text-2xl font-semibold">Dashboard</h1>
-					<p className="text-gray-500 text-sm">Overview of key metrics and AI insights</p>
+					<h1 style={{ fontSize: '24px', fontWeight: '600', margin: '0 0 8px 0' }}>Dashboard</h1>
+					<p style={{ color: '#666', fontSize: '14px', margin: '0' }}>Overview of key metrics and AI insights</p>
 				</div>
-				<button className="inline-flex items-center gap-2 bg-blue-600 text-white text-sm px-4 py-2 rounded-md hover:bg-blue-700">+ New Report</button>
+				<button style={{ backgroundColor: '#2563eb', color: 'white', padding: '8px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}>+ New Report</button>
 			</div>
 
 			{/* Stats grid */}
-			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+			<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px', marginBottom: '24px' }}>
 				{stats.map((s) => (
 					<StatCard key={s.title} {...s} />
 				))}
@@ -69,7 +83,10 @@ export default function Dashboard() {
 							<option>Last 30 days</option>
 						</select>
 					</div>
-					<RevenueLineChart data={revenueData} />
+					{/* <RevenueLineChart data={revenueData} /> */}
+					<div className="mt-4 h-64 bg-gray-100 rounded flex items-center justify-center">
+						<p className="text-gray-500">Revenue Chart Placeholder</p>
+					</div>
 				</section>
 
 				{/* AI Recommendations */}
@@ -94,7 +111,40 @@ export default function Dashboard() {
 			</div>
 
 			{/* Quick Actions */}
-			<QuickActions />
+			{/* <QuickActions /> */}
+			<section className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+				<h2 className="font-semibold mb-3">Quick Actions</h2>
+				<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+					<div className="flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow transition">
+						<div className="h-10 w-10 flex items-center justify-center rounded-lg bg-blue-50 text-blue-700 text-lg">🎫</div>
+						<div className="text-left">
+							<div className="font-medium text-sm">New Ticket</div>
+							<div className="text-xs text-gray-500">Create a support ticket</div>
+						</div>
+					</div>
+					<div className="flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow transition">
+						<div className="h-10 w-10 flex items-center justify-center rounded-lg bg-green-50 text-green-700 text-lg">👤</div>
+						<div className="text-left">
+							<div className="font-medium text-sm">Add Client</div>
+							<div className="text-xs text-gray-500">Create a new client</div>
+						</div>
+					</div>
+					<div className="flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow transition">
+						<div className="h-10 w-10 flex items-center justify-center rounded-lg bg-amber-50 text-amber-700 text-lg">💵</div>
+						<div className="text-left">
+							<div className="font-medium text-sm">Create Invoice</div>
+							<div className="text-xs text-gray-500">Bill for services</div>
+						</div>
+					</div>
+					<div className="flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow transition">
+						<div className="h-10 w-10 flex items-center justify-center rounded-lg bg-purple-50 text-purple-700 text-lg">⬆️</div>
+						<div className="text-left">
+							<div className="font-medium text-sm">Import CSV</div>
+							<div className="text-xs text-gray-500">Upload data file</div>
+						</div>
+					</div>
+				</div>
+			</section>
 
 			{/* Secondary grid */}
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

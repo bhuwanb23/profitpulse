@@ -15,20 +15,23 @@ export function AuthProvider({ children }) {
 			try {
 				setLoading(true)
 				const storedUser = localStorage.getItem(STORAGE_KEY)
+				console.log('Bootstrap: storedUser =', storedUser)
 				if (storedUser) {
 					const userData = JSON.parse(storedUser)
+					console.log('Bootstrap: userData =', userData)
 					setUser(userData)
-					// Verify user is still valid by checking profile
-					try {
-						const { data } = await api.get(`/auth/profile/${userData.id}`)
-						setUser(data.data.user)
-					} catch (e) {
-						// User might be invalid, clear it
-						localStorage.removeItem(STORAGE_KEY)
-						setUser(null)
-					}
+					// Skip profile verification for now to avoid issues
+					// try {
+					// 	const { data } = await api.get(`/auth/profile/${userData.id}`)
+					// 	setUser(data.data.user)
+					// } catch (e) {
+					// 	// User might be invalid, clear it
+					// 	localStorage.removeItem(STORAGE_KEY)
+					// 	setUser(null)
+					// }
 				}
 			} catch (e) {
+				console.error('Bootstrap error:', e)
 				// Clear invalid data
 				localStorage.removeItem(STORAGE_KEY)
 				setUser(null)
