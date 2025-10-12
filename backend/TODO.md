@@ -268,13 +268,13 @@ The frontend is already 100% complete with all components and pages. Now we need
 - [x] DELETE /api/reports/scheduled/:id - Cancel scheduled report
 
 ### 7.2 Notification APIs
-- [ ] GET /api/notifications - List notifications
-- [ ] PUT /api/notifications/:id/read - Mark as read
-- [ ] POST /api/notifications/preferences - Update preferences
-- [ ] GET /api/notifications/email-settings - Email settings
-- [ ] PUT /api/notifications/email-settings - Update email settings
-- [ ] GET /api/notifications/alerts - Dashboard alerts
-- [ ] POST /api/notifications/test - Test notification
+- [x] GET /api/notifications - List notifications
+- [x] PUT /api/notifications/:id/read - Mark as read
+- [x] POST /api/notifications/preferences - Update preferences
+- [x] GET /api/notifications/email-settings - Email settings
+- [x] PUT /api/notifications/email-settings - Update email settings
+- [x] GET /api/notifications/alerts - Dashboard alerts
+- [x] POST /api/notifications/test - Test notification
 
 ---
 
