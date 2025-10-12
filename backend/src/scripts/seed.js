@@ -33,6 +33,7 @@ async function seedDatabase() {
       first_name: 'Admin',
       last_name: 'User',
       role: 'admin',
+      organization_id: organization.id,
       is_active: true
     });
     console.log('✅ Admin user created:', adminUser.email);

@@ -17,7 +17,7 @@ async function runMigrations() {
     console.log('🔄 Starting database migrations...');
     
     // Sync all models with database
-    await sequelize.sync({ force: false, alter: true });
+    await sequelize.sync({ force: true });
     console.log('✅ Database tables synchronized');
     
     console.log('🎉 Database migrations completed successfully!');

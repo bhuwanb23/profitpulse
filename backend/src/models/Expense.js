@@ -24,14 +24,6 @@ const Expense = sequelize.define('Expense', {
       key: 'id'
     }
   },
-  budget_category_id: {
-    type: DataTypes.TEXT,
-    allowNull: true,
-    references: {
-      model: 'budget_categories',
-      key: 'id'
-    }
-  },
   description: {
     type: DataTypes.STRING,
     allowNull: false,

@@ -39,6 +39,14 @@ const User = sequelize.define('User', {
     defaultValue: 'user',
     allowNull: false
   },
+  organization_id: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    references: {
+      model: 'organizations',
+      key: 'id'
+    }
+  },
   is_active: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
