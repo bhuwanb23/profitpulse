@@ -68,8 +68,15 @@ class SuperOpsAPIConfig(BaseSettings):
 
 class QuickBooksConfig(BaseSettings):
     """QuickBooks integration configuration"""
-    client_id: Optional[str] = Field(default=None, env="QUICKBOOKS_CLIENT_ID")
-    client_secret: Optional[str] = Field(default=None, env="QUICKBOOKS_CLIENT_SECRET")
+    base_url: str = Field(default="https://sandbox-quickbooks.api.intuit.com", env="QUICKBOOKS_BASE_URL")
+    client_id: str = Field(default="your_quickbooks_client_id", env="QUICKBOOKS_CLIENT_ID")
+    client_secret: str = Field(default="your_quickbooks_client_secret", env="QUICKBOOKS_CLIENT_SECRET")
+    access_token: str = Field(default="your_quickbooks_access_token", env="QUICKBOOKS_ACCESS_TOKEN")
+    refresh_token: str = Field(default="your_quickbooks_refresh_token", env="QUICKBOOKS_REFRESH_TOKEN")
+    company_id: str = Field(default="your_company_id", env="QUICKBOOKS_COMPANY_ID")
+    timeout: int = Field(default=30, env="QUICKBOOKS_API_TIMEOUT")
+    max_retries: int = Field(default=3, env="QUICKBOOKS_API_MAX_RETRIES")
+    rate_limit_delay: float = Field(default=0.1, env="QUICKBOOKS_API_RATE_LIMIT_DELAY")
     redirect_uri: str = Field(default="http://localhost:8000/auth/callback", env="QUICKBOOKS_REDIRECT_URI")
     sandbox_url: str = Field(default="https://sandbox-quickbooks.api.intuit.com", env="QUICKBOOKS_SANDBOX_URL")
     production_url: str = Field(default="https://quickbooks.api.intuit.com", env="QUICKBOOKS_PRODUCTION_URL")
