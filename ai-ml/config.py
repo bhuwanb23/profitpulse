@@ -53,6 +53,19 @@ class SuperOpsConfig(BaseSettings):
         env_file = ".env"
 
 
+class SuperOpsAPIConfig(BaseSettings):
+    """SuperOps API client configuration"""
+    base_url: str = Field(default="https://api.superops.com", env="SUPEROPS_API_BASE_URL")
+    api_key: str = Field(default="your_superops_api_key", env="SUPEROPS_API_KEY")
+    tenant_id: str = Field(default="your_tenant_id", env="SUPEROPS_TENANT_ID")
+    timeout: int = Field(default=30, env="SUPEROPS_API_TIMEOUT")
+    max_retries: int = Field(default=3, env="SUPEROPS_API_MAX_RETRIES")
+    rate_limit_delay: float = Field(default=0.1, env="SUPEROPS_API_RATE_LIMIT_DELAY")
+    
+    class Config:
+        env_file = ".env"
+
+
 class QuickBooksConfig(BaseSettings):
     """QuickBooks integration configuration"""
     client_id: Optional[str] = Field(default=None, env="QUICKBOOKS_CLIENT_ID")
@@ -186,6 +199,7 @@ class Settings(BaseSettings):
     database: DatabaseConfig = DatabaseConfig()
     backend_api: BackendAPIConfig = BackendAPIConfig()
     superops: SuperOpsConfig = SuperOpsConfig()
+    superops_api: SuperOpsAPIConfig = SuperOpsAPIConfig()
     quickbooks: QuickBooksConfig = QuickBooksConfig()
     mlflow: MLflowConfig = MLflowConfig()
     wandb: WandBConfig = WandBConfig()
