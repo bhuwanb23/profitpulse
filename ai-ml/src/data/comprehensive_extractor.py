@@ -9,8 +9,10 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, AsyncGenerator
 from dataclasses import dataclass
 
-from .superops_client import create_superops_client
-from .quickbooks_client import create_quickbooks_client
+from .superops_graphql_client import create_superops_graphql_client
+from .quickbooks_rest_client import create_quickbooks_rest_client
+from .transformers import DataTransformer
+from ..utils.error_handlers import get_error_handler
 from .internal_db_connector import create_internal_db_connector
 
 logger = logging.getLogger(__name__)
@@ -36,6 +38,8 @@ class ComprehensiveDataExtractor:
         self.superops_client = None
         self.quickbooks_client = None
         self.internal_db_connector = None
+        self.transformer = DataTransformer()
+        self.error_handler = get_error_handler()
         
     async def __aenter__(self):
         """Async context manager entry"""
@@ -51,14 +55,14 @@ class ComprehensiveDataExtractor:
         logger.info("Initializing comprehensive data extractor")
         
         if self.config.include_superops:
-            self.superops_client = create_superops_client()
+            self.superops_client = create_superops_graphql_client()
             await self.superops_client.initialize()
-            logger.info("SuperOps client initialized")
+            logger.info("SuperOps GraphQL client initialized")
         
         if self.config.include_quickbooks:
-            self.quickbooks_client = create_quickbooks_client()
+            self.quickbooks_client = create_quickbooks_rest_client()
             await self.quickbooks_client.initialize()
-            logger.info("QuickBooks client initialized")
+            logger.info("QuickBooks REST client initialized")
         
         if self.config.include_internal:
             self.internal_db_connector = create_internal_db_connector()
@@ -149,78 +153,146 @@ class ComprehensiveDataExtractor:
             if isinstance(data, list)
         )
         
+        # Calculate metrics from transformed data
+        metrics = self.transformer.calculate_metrics(all_data)
+        all_data["metrics"] = metrics
+        
         logger.info(f"Comprehensive data extraction completed in {(end_time - start_time).total_seconds():.2f}s")
         logger.info(f"Total records extracted: {all_data['extraction_metadata']['total_records']}")
         
         return all_data
     
     async def _extract_superops_data(self) -> Dict[str, Any]:
-        """Extract data from SuperOps"""
+        """Extract data from SuperOps using GraphQL client"""
         logger.info("Extracting SuperOps data")
         
         superops_data = {}
         
-        # Extract tickets
-        tickets = await self.superops_client.get_tickets(
-            start_date=self.config.start_date,
-            end_date=self.config.end_date,
-            limit=self.config.max_records_per_source
-        )
-        superops_data["superops_tickets"] = tickets
-        
-        # Extract clients
-        clients = await self.superops_client.get_clients(limit=self.config.max_records_per_source)
-        superops_data["superops_clients"] = clients
-        
-        # Extract technicians
-        technicians = await self.superops_client.get_technicians(limit=self.config.max_records_per_source)
-        superops_data["superops_technicians"] = technicians
-        
-        # Extract SLA metrics
-        sla_metrics = await self.superops_client.get_sla_metrics(
-            start_date=self.config.start_date,
-            end_date=self.config.end_date
-        )
-        superops_data["superops_sla_metrics"] = sla_metrics
+        try:
+            # Extract tickets with error handling
+            tickets_raw = await self.error_handler.with_retry(
+                self.superops_client.get_tickets,
+                "superops",
+                start_date=self.config.start_date,
+                end_date=self.config.end_date,
+                limit=self.config.max_records_per_source
+            )
+            
+            # Transform tickets to internal format
+            tickets = self.transformer.transform_superops_tickets(tickets_raw)
+            superops_data["superops_tickets"] = tickets
+            
+            # Extract clients
+            clients_raw = await self.error_handler.with_retry(
+                self.superops_client.get_clients,
+                "superops",
+                limit=self.config.max_records_per_source
+            )
+            
+            # Transform clients to internal format
+            clients = self.transformer.transform_superops_clients(clients_raw)
+            superops_data["superops_clients"] = clients
+            
+            # Extract technicians
+            technicians_raw = await self.error_handler.with_retry(
+                self.superops_client.get_technicians,
+                "superops",
+                limit=self.config.max_records_per_source
+            )
+            
+            # Transform technicians to internal format
+            technicians = self.transformer.transform_superops_technicians(technicians_raw)
+            superops_data["superops_technicians"] = technicians
+            
+            # Extract SLA metrics
+            sla_metrics_raw = await self.error_handler.with_retry(
+                self.superops_client.get_sla_metrics,
+                "superops",
+                start_date=self.config.start_date,
+                end_date=self.config.end_date
+            )
+            superops_data["superops_sla_metrics"] = sla_metrics_raw
+            
+        except Exception as e:
+            logger.error(f"SuperOps data extraction failed: {e}")
+            # Return empty data structure
+            superops_data = {
+                "superops_tickets": [],
+                "superops_clients": [],
+                "superops_technicians": [],
+                "superops_sla_metrics": []
+            }
         
         logger.info(f"SuperOps data extracted: {sum(len(data) for data in superops_data.values() if isinstance(data, list))} records")
         return superops_data
     
     async def _extract_quickbooks_data(self) -> Dict[str, Any]:
-        """Extract data from QuickBooks"""
+        """Extract data from QuickBooks using REST client with OAuth"""
         logger.info("Extracting QuickBooks data")
         
         quickbooks_data = {}
         
-        # Extract financial transactions
-        transactions = await self.quickbooks_client.get_financial_transactions(
-            start_date=self.config.start_date,
-            end_date=self.config.end_date,
-            limit=self.config.max_records_per_source
-        )
-        quickbooks_data["quickbooks_transactions"] = transactions
-        
-        # Extract invoices and payments
-        invoices_payments = await self.quickbooks_client.get_invoices_and_payments(
-            start_date=self.config.start_date,
-            end_date=self.config.end_date,
-            limit=self.config.max_records_per_source
-        )
-        quickbooks_data.update(invoices_payments)
-        
-        # Extract expenses
-        expenses = await self.quickbooks_client.get_expenses_and_costs(
-            start_date=self.config.start_date,
-            end_date=self.config.end_date,
-            limit=self.config.max_records_per_source
-        )
-        quickbooks_data["quickbooks_expenses"] = expenses
-        
-        # Extract customer profiles
-        customer_profiles = await self.quickbooks_client.get_customer_financial_profiles(
-            limit=self.config.max_records_per_source
-        )
-        quickbooks_data["quickbooks_customer_profiles"] = customer_profiles
+        try:
+            # Extract financial transactions with error handling
+            transactions_raw = await self.error_handler.with_retry(
+                self.quickbooks_client.get_financial_transactions,
+                "quickbooks",
+                start_date=self.config.start_date,
+                end_date=self.config.end_date,
+                limit=self.config.max_records_per_source
+            )
+            quickbooks_data["quickbooks_transactions"] = transactions_raw
+            
+            # Extract invoices and payments
+            invoices_payments_raw = await self.error_handler.with_retry(
+                self.quickbooks_client.get_invoices_and_payments,
+                "quickbooks",
+                start_date=self.config.start_date,
+                end_date=self.config.end_date,
+                limit=self.config.max_records_per_source
+            )
+            
+            # Transform invoices and payments to internal format
+            invoices = self.transformer.transform_quickbooks_invoices(invoices_payments_raw.get("invoices", []))
+            payments = self.transformer.transform_quickbooks_payments(invoices_payments_raw.get("payments", []))
+            
+            quickbooks_data["quickbooks_invoices"] = invoices
+            quickbooks_data["quickbooks_payments"] = payments
+            
+            # Extract expenses
+            expenses_raw = await self.error_handler.with_retry(
+                self.quickbooks_client.get_expenses_and_costs,
+                "quickbooks",
+                start_date=self.config.start_date,
+                end_date=self.config.end_date,
+                limit=self.config.max_records_per_source
+            )
+            
+            # Transform expenses to internal format
+            expenses = self.transformer.transform_quickbooks_expenses(expenses_raw)
+            quickbooks_data["quickbooks_expenses"] = expenses
+            
+            # Extract customer profiles
+            customers_raw = await self.error_handler.with_retry(
+                self.quickbooks_client.get_customer_financial_profiles,
+                "quickbooks",
+                limit=self.config.max_records_per_source
+            )
+            
+            # Transform customers to internal format
+            customers = self.transformer.transform_quickbooks_customers(customers_raw)
+            quickbooks_data["quickbooks_customers"] = customers
+            
+        except Exception as e:
+            logger.error(f"QuickBooks data extraction failed: {e}")
+            # Return empty data structure
+            quickbooks_data = {
+                "quickbooks_transactions": [],
+                "quickbooks_invoices": [],
+                "quickbooks_payments": [],
+                "quickbooks_expenses": [],
+                "quickbooks_customers": []
+            }
         
         logger.info(f"QuickBooks data extracted: {sum(len(data) for data in quickbooks_data.values() if isinstance(data, list))} records")
         return quickbooks_data
