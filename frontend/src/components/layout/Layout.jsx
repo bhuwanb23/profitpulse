@@ -15,7 +15,10 @@ export default function Layout() {
 	const isClientPage = location.pathname.startsWith('/client')
 	const clientId = location.pathname.match(/\/client-(?:analytics|services)\/(.+)/)?.[1]
 
-	// Enhanced navigation items with client sub-pages
+	// Check if we're on a ticket-related page
+	const isTicketPage = location.pathname.startsWith('/ticket')
+
+	// Enhanced navigation items with client and ticket sub-pages
 	const getNavigationItems = () => {
 		const baseItems = [
 			{ to: '/dashboard', label: 'Dashboard', icon: '🏠' },
@@ -30,9 +33,19 @@ export default function Layout() {
 			)
 		}
 
+		// Add tickets section
+		baseItems.push({ to: '/tickets', label: 'Tickets', icon: '🎫' })
+
+		// Add ticket sub-pages if we're on a ticket page
+		if (isTicketPage) {
+			baseItems.push(
+				{ to: '/ticket-analytics', label: '📈 Ticket Analytics', icon: '📈', isSubItem: true },
+				{ to: '/ticket-operations', label: '⚙️ Ticket Operations', icon: '⚙️', isSubItem: true }
+			)
+		}
+
 		// Add remaining items
 		baseItems.push(
-			{ to: '/tickets', label: 'Tickets', icon: '🎫' },
 			{ to: '/invoices', label: 'Invoices', icon: '💰' },
 			{ to: '/analytics', label: 'Analytics', icon: '📊' },
 			{ to: '/reports', label: 'Reports', icon: '📑' },
