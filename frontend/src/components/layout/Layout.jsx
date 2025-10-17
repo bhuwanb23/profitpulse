@@ -1,27 +1,52 @@
 import { useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuthContext } from '../../contexts/AuthContext'
 import Breadcrumbs from '../navigation/Breadcrumbs'
 import ErrorBoundary from '../ui/ErrorBoundary'
 import BottomNav from '../navigation/BottomNav'
 
-const navItems = [
-	{ to: '/dashboard', label: 'Dashboard', icon: '🏠' },
-	{ to: '/clients', label: 'Clients', icon: '👥' },
-	{ to: '/tickets', label: 'Tickets', icon: '🎫' },
-	{ to: '/invoices', label: 'Invoices', icon: '💰' },
-	{ to: '/analytics', label: 'Analytics', icon: '📊' },
-	{ to: '/reports', label: 'Reports', icon: '📑' },
-	{ to: '/notifications', label: 'Notifications', icon: '🔔' },
-	{ to: '/billing-analytics', label: 'Billing Analytics', icon: '💹' },
-	{ to: '/budget-management', label: 'Budget Management', icon: '📘' },
-	{ to: '/ai', label: 'AI Insights', icon: '🧠' },
-	{ to: '/settings', label: 'Settings', icon: '⚙️' },
-]
 
 export default function Layout() {
 	const [sidebarOpen, setSidebarOpen] = useState(false)
 	const { user, logout } = useAuthContext()
+	const location = useLocation()
+
+	// Check if we're on a client-related page
+	const isClientPage = location.pathname.startsWith('/client')
+	const clientId = location.pathname.match(/\/client-(?:analytics|services)\/(.+)/)?.[1]
+
+	// Enhanced navigation items with client sub-pages
+	const getNavigationItems = () => {
+		const baseItems = [
+			{ to: '/dashboard', label: 'Dashboard', icon: '🏠' },
+			{ to: '/clients', label: 'Clients', icon: '👥' },
+		]
+
+		// Add client sub-pages if we're on a client page
+		if (isClientPage && clientId) {
+			baseItems.push(
+				{ to: `/client-analytics/${clientId}`, label: '📊 Client Analytics', icon: '📊', isSubItem: true },
+				{ to: `/client-services/${clientId}`, label: '⚙️ Client Services', icon: '⚙️', isSubItem: true }
+			)
+		}
+
+		// Add remaining items
+		baseItems.push(
+			{ to: '/tickets', label: 'Tickets', icon: '🎫' },
+			{ to: '/invoices', label: 'Invoices', icon: '💰' },
+			{ to: '/analytics', label: 'Analytics', icon: '📊' },
+			{ to: '/reports', label: 'Reports', icon: '📑' },
+			{ to: '/notifications', label: 'Notifications', icon: '🔔' },
+			{ to: '/billing-analytics', label: 'Billing Analytics', icon: '💹' },
+			{ to: '/budget-management', label: 'Budget Management', icon: '📘' },
+			{ to: '/ai', label: 'AI Insights', icon: '🧠' },
+			{ to: '/settings', label: 'Settings', icon: '⚙️' }
+		)
+
+		return baseItems
+	}
+
+	const navigationItems = getNavigationItems()
 
 	return (
 		<div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', color: '#111827', paddingBottom: '64px' }}>
@@ -69,7 +94,7 @@ export default function Layout() {
 				{/* Sidebar */}
 				<aside style={{ position: 'sticky', top: '80px', alignSelf: 'start', backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '12px', height: 'max-content' }}>
 					<nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-						{navItems.map((item) => (
+						{navigationItems.map((item) => (
 							<NavLink
 								key={item.to}
 								to={item.to}
@@ -78,12 +103,15 @@ export default function Layout() {
 									alignItems: 'center',
 									gap: '8px',
 									padding: '8px 12px',
+									paddingLeft: item.isSubItem ? '24px' : '12px',
 									borderRadius: '6px',
 									fontSize: '14px',
 									textDecoration: 'none',
 									color: isActive ? '#1d4ed8' : '#374151',
 									backgroundColor: isActive ? '#eff6ff' : 'transparent',
-									border: isActive ? '1px solid #bfdbfe' : '1px solid transparent'
+									border: isActive ? '1px solid #bfdbfe' : '1px solid transparent',
+									borderLeft: item.isSubItem ? '3px solid #e5e7eb' : 'none',
+									marginLeft: item.isSubItem ? '8px' : '0'
 								})}
 							>
 								<span style={{ fontSize: '16px' }}>{item.icon}</span>

@@ -4,9 +4,18 @@ const labelMap = {
 	'': 'Dashboard',
 	dashboard: 'Dashboard',
 	clients: 'Clients',
+	'client-analytics': 'Client Analytics',
+	'client-services': 'Client Services',
 	tickets: 'Tickets',
+	'ticket-analytics': 'Ticket Analytics',
+	'ticket-operations': 'Ticket Operations',
 	invoices: 'Invoices',
 	analytics: 'Analytics',
+	'billing-analytics': 'Billing Analytics',
+	'budget-management': 'Budget Management',
+	reports: 'Reports',
+	notifications: 'Notifications',
+	ai: 'AI Insights',
 	settings: 'Settings',
 }
 
