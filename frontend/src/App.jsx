@@ -23,42 +23,48 @@ import BillingAnalyticsPage from './pages/BillingAnalytics'
 import BudgetManagementPage from './pages/BudgetManagement'
 import Reports from './pages/Reports'
 import Notifications from './pages/Notifications'
+import BackgroundPattern from './components/ui/BackgroundPattern'
 
 function App() {
 	return (
-		<BrowserRouter>
-			<AuthProvider>
-				<Routes>
-					<Route path="/login" element={<Login />} />
-					<Route path="/register" element={<Register />} />
+		<div className="relative">
+			{/* Beautiful Background Pattern */}
+			<BackgroundPattern />
+			
+			<BrowserRouter>
+				<AuthProvider>
+					<Routes>
+						<Route path="/login" element={<Login />} />
+						<Route path="/register" element={<Register />} />
 
-					<Route element={<ProtectedRoute />}>
-						<Route element={<Layout />}> 
-							<Route index element={<Dashboard />} />
-							<Route path="dashboard" element={<Dashboard />} />
-							<Route path="clients/*" element={<Clients />} />
-							<Route path="client-services/:id?" element={<ClientServicesPage />} />
-							<Route path="client-analytics/:id?" element={<ClientAnalyticsPage />} />
-							<Route path="tickets/*" element={<Tickets />} />
-							<Route path="ticket-analytics" element={<TicketAnalyticsPage />} />
-							<Route path="ticket-operations" element={<TicketOperationsPage />} />
-							<Route path="invoices/*" element={<Invoices />} />
-							<Route path="invoice-analytics" element={<InvoiceAnalyticsPage />} />
-							<Route path="invoice-operations" element={<InvoiceOperationsPage />} />
-							<Route path="invoices/:id" element={<InvoiceDetail />} />
-							<Route path="analytics" element={<Analytics />} />
-							<Route path="reports" element={<Reports />} />
-							<Route path="billing-analytics" element={<BillingAnalyticsPage />} />
-							<Route path="budget-management" element={<BudgetManagementPage />} />
-							<Route path="ai" element={<AIInsights />} />
-							<Route path="notifications" element={<Notifications />} />
-							<Route path="settings" element={<Settings />} />
-							<Route path="*" element={<Navigate to="/dashboard" replace />} />
+						<Route element={<ProtectedRoute />}>
+							<Route element={<Layout />}> 
+								<Route index element={<Dashboard />} />
+								<Route path="dashboard" element={<Dashboard />} />
+								<Route path="clients/*" element={<Clients />} />
+								<Route path="client-services/:id?" element={<ClientServicesPage />} />
+								<Route path="client-analytics/:id?" element={<ClientAnalyticsPage />} />
+								<Route path="tickets/*" element={<Tickets />} />
+								<Route path="ticket-analytics" element={<TicketAnalyticsPage />} />
+								<Route path="ticket-operations" element={<TicketOperationsPage />} />
+								<Route path="invoices/*" element={<Invoices />} />
+								<Route path="invoice-analytics" element={<InvoiceAnalyticsPage />} />
+								<Route path="invoice-operations" element={<InvoiceOperationsPage />} />
+								<Route path="invoices/:id" element={<InvoiceDetail />} />
+								<Route path="analytics" element={<Analytics />} />
+								<Route path="reports" element={<Reports />} />
+								<Route path="billing-analytics" element={<BillingAnalyticsPage />} />
+								<Route path="budget-management" element={<BudgetManagementPage />} />
+								<Route path="ai" element={<AIInsights />} />
+								<Route path="notifications" element={<Notifications />} />
+								<Route path="settings" element={<Settings />} />
+								<Route path="*" element={<Navigate to="/dashboard" replace />} />
+							</Route>
 						</Route>
-					</Route>
-				</Routes>
-			</AuthProvider>
-		</BrowserRouter>
+					</Routes>
+				</AuthProvider>
+			</BrowserRouter>
+		</div>
 	)
 }
 

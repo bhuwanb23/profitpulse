@@ -18,139 +18,210 @@ export default function Layout() {
 	// Check if we're on a ticket-related page
 	const isTicketPage = location.pathname.startsWith('/ticket')
 
-	// Enhanced navigation items with client, ticket, and invoice sub-pages
+	// Enhanced navigation items with categories
 	const getNavigationItems = () => {
-		const baseItems = [
-			{ to: '/dashboard', label: 'Dashboard', icon: '🏠' },
-			{ to: '/clients', label: 'Clients', icon: '👥' },
+		const categories = [
+			{
+				title: 'Overview',
+				items: [
+					{ to: '/dashboard', label: 'Dashboard', icon: '🏠', gradient: 'from-blue-500 to-purple-600' },
+					{ to: '/analytics', label: 'Analytics', icon: '📊', gradient: 'from-green-500 to-teal-600' },
+					{ to: '/reports', label: 'Reports', icon: '📑', gradient: 'from-orange-500 to-red-600' },
+				]
+			},
+			{
+				title: 'Client Management',
+				items: [
+					{ to: '/clients', label: 'Clients', icon: '👥', gradient: 'from-indigo-500 to-blue-600' },
+				]
+			},
+			{
+				title: 'Operations',
+				items: [
+					{ to: '/tickets', label: 'Tickets', icon: '🎫', gradient: 'from-purple-500 to-pink-600' },
+					{ to: '/invoices', label: 'Invoices', icon: '💰', gradient: 'from-yellow-500 to-orange-600' },
+				]
+			},
+			{
+				title: 'Financial',
+				items: [
+					{ to: '/billing-analytics', label: 'Billing Analytics', icon: '💹', gradient: 'from-emerald-500 to-green-600' },
+					{ to: '/budget-management', label: 'Budget Management', icon: '📘', gradient: 'from-cyan-500 to-blue-600' },
+				]
+			},
+			{
+				title: 'Intelligence',
+				items: [
+					{ to: '/ai', label: 'AI Insights', icon: '🧠', gradient: 'from-violet-500 to-purple-600' },
+					{ to: '/notifications', label: 'Notifications', icon: '🔔', gradient: 'from-pink-500 to-rose-600' },
+				]
+			},
+			{
+				title: 'System',
+				items: [
+					{ to: '/settings', label: 'Settings', icon: '⚙️', gradient: 'from-gray-500 to-slate-600' },
+				]
+			}
 		]
 
-		// Add client sub-pages if we're on a client page
+		// Add dynamic sub-items
 		if (isClientPage && clientId) {
-			baseItems.push(
-				{ to: `/client-analytics/${clientId}`, label: '📊 Client Analytics', icon: '📊', isSubItem: true },
-				{ to: `/client-services/${clientId}`, label: '⚙️ Client Services', icon: '⚙️', isSubItem: true }
+			categories[1].items.push(
+				{ to: `/client-analytics/${clientId}`, label: 'Client Analytics', icon: '📊', isSubItem: true, gradient: 'from-blue-400 to-indigo-500' },
+				{ to: `/client-services/${clientId}`, label: 'Client Services', icon: '⚙️', isSubItem: true, gradient: 'from-teal-400 to-cyan-500' }
 			)
 		}
 
-		// Add tickets section
-		baseItems.push({ to: '/tickets', label: 'Tickets', icon: '🎫' })
-
-		// Add ticket sub-pages if we're on a ticket page
 		if (isTicketPage) {
-			baseItems.push(
-				{ to: '/ticket-analytics', label: '📈 Ticket Analytics', icon: '📈', isSubItem: true },
-				{ to: '/ticket-operations', label: '⚙️ Ticket Operations', icon: '⚙️', isSubItem: true }
+			categories[2].items.push(
+				{ to: '/ticket-analytics', label: 'Ticket Analytics', icon: '📈', isSubItem: true, gradient: 'from-purple-400 to-pink-500' },
+				{ to: '/ticket-operations', label: 'Ticket Operations', icon: '⚙️', isSubItem: true, gradient: 'from-indigo-400 to-purple-500' }
 			)
 		}
 
-		// Add invoices section
-		baseItems.push({ to: '/invoices', label: 'Invoices', icon: '💰' })
-
-		// Add invoice sub-pages if we're on an invoice page
 		const isInvoicePage = location.pathname.startsWith('/invoice')
 		if (isInvoicePage) {
-			baseItems.push(
-				{ to: '/invoice-analytics', label: '📊 Invoice Analytics', icon: '📊', isSubItem: true },
-				{ to: '/invoice-operations', label: '⚙️ Invoice Operations', icon: '⚙️', isSubItem: true }
+			categories[2].items.push(
+				{ to: '/invoice-analytics', label: 'Invoice Analytics', icon: '📊', isSubItem: true, gradient: 'from-yellow-400 to-orange-500' },
+				{ to: '/invoice-operations', label: 'Invoice Operations', icon: '⚙️', isSubItem: true, gradient: 'from-orange-400 to-red-500' }
 			)
 		}
 
-		// Add remaining items
-		baseItems.push(
-			{ to: '/analytics', label: 'Analytics', icon: '📊' },
-			{ to: '/reports', label: 'Reports', icon: '📑' },
-			{ to: '/notifications', label: 'Notifications', icon: '🔔' },
-			{ to: '/billing-analytics', label: 'Billing Analytics', icon: '💹' },
-			{ to: '/budget-management', label: 'Budget Management', icon: '📘' },
-			{ to: '/ai', label: 'AI Insights', icon: '🧠' },
-			{ to: '/settings', label: 'Settings', icon: '⚙️' }
-		)
-
-		return baseItems
+		return categories
 	}
 
-	const navigationItems = getNavigationItems()
+	const navigationCategories = getNavigationItems()
 
 	return (
-		<div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', color: '#111827', paddingBottom: '64px' }}>
-			{/* Header */}
-			<header style={{ position: 'sticky', top: 0, zIndex: 30, backgroundColor: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(10px)', borderBottom: '1px solid #e5e7eb' }}>
-				<div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 16px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+		<div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 text-gray-900 pb-16">
+			{/* Modern Header */}
+			<header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-gray-200/50 shadow-sm">
+				<div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
 					<button 
-						style={{ display: 'none', padding: '8px', borderRadius: '4px', backgroundColor: 'transparent', border: 'none', cursor: 'pointer' }}
+						className="lg:hidden p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
 						onClick={() => setSidebarOpen((s) => !s)} 
 						aria-label="Toggle sidebar"
 					>
-						☰
+						<span className="text-lg">☰</span>
 					</button>
-					<div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-						<div style={{ height: '32px', width: '32px', borderRadius: '4px', backgroundColor: '#2563eb', color: 'white', display: 'grid', placeItems: 'center', fontWeight: 'bold' }}>SH</div>
-						<span style={{ fontWeight: '600' }}>SuperHack</span>
+					
+					{/* Logo */}
+					<div className="flex items-center gap-3">
+						<div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-600 to-purple-700 text-white flex items-center justify-center font-bold text-lg shadow-lg">
+							SH
+						</div>
+						<div className="hidden sm:block">
+							<h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+								SuperHack
+							</h1>
+							<p className="text-xs text-gray-500">MSP Management Platform</p>
+						</div>
 					</div>
-					<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-						<input 
-							style={{ display: 'none', width: '256px', borderRadius: '6px', border: '1px solid #d1d5db', padding: '6px 12px', fontSize: '14px' }}
-							placeholder="Search..." 
-						/>
-						<div style={{ height: '32px', width: '32px', display: 'grid', placeItems: 'center', borderRadius: '50%', backgroundColor: '#f3f4f6' }}>🔔</div>
+
+					{/* Header Actions */}
+					<div className="flex items-center gap-3">
+						<div className="hidden md:flex items-center gap-2">
+							<input 
+								className="w-64 px-4 py-2 rounded-xl border border-gray-200 bg-white/50 backdrop-blur-sm text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300"
+								placeholder="Search anything..." 
+							/>
+						</div>
+						
+						<button className="relative p-2 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-100 hover:from-blue-100 hover:to-indigo-200 transition-all duration-200">
+							<span className="text-lg">🔔</span>
+							<div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
+						</button>
+						
 						<button 
 							onClick={logout} 
-							style={{ fontSize: '12px', padding: '6px 12px', borderRadius: '4px', backgroundColor: '#f3f4f6', border: 'none', cursor: 'pointer' }}
+							className="px-4 py-2 rounded-xl bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-sm font-medium transition-all duration-200"
 						>
 							Logout
 						</button>
+						
 						<div 
-							style={{ height: '32px', width: '32px', display: 'grid', placeItems: 'center', borderRadius: '50%', backgroundColor: '#f3f4f6' }} 
+							className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center cursor-pointer hover:from-purple-200 hover:to-pink-200 transition-all duration-200" 
 							title={user?.email || ''}
 						>
-							👤
+							<span className="text-lg">👤</span>
 						</div>
 					</div>
 				</div>
 			</header>
 
-			{/* Body */}
-			<div style={{ maxWidth: '1280px', margin: '0 auto', padding: '16px' }}>
-				<Breadcrumbs />
-			</div>
-			<div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 16px 24px', display: 'grid', gridTemplateColumns: '220px 1fr', gap: '24px' }}>
-				{/* Sidebar */}
-				<aside style={{ position: 'sticky', top: '80px', alignSelf: 'start', backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '12px', height: 'max-content' }}>
-					<nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-						{navigationItems.map((item) => (
-							<NavLink
-								key={item.to}
-								to={item.to}
-								style={({ isActive }) => ({
-									display: 'flex',
-									alignItems: 'center',
-									gap: '8px',
-									padding: '8px 12px',
-									paddingLeft: item.isSubItem ? '24px' : '12px',
-									borderRadius: '6px',
-									fontSize: '14px',
-									textDecoration: 'none',
-									color: isActive ? '#1d4ed8' : '#374151',
-									backgroundColor: isActive ? '#eff6ff' : 'transparent',
-									border: isActive ? '1px solid #bfdbfe' : '1px solid transparent',
-									borderLeft: item.isSubItem ? '3px solid #e5e7eb' : 'none',
-									marginLeft: item.isSubItem ? '8px' : '0'
-								})}
-							>
-								<span style={{ fontSize: '16px' }}>{item.icon}</span>
-								<span>{item.label}</span>
-							</NavLink>
-						))}
-					</nav>
-				</aside>
+			{/* Main Layout */}
+			<div className="max-w-7xl mx-auto px-6 py-6">
+				<div className="mb-6">
+					<Breadcrumbs />
+				</div>
+				
+				<div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
+					{/* Beautiful Sidebar */}
+					<aside className="lg:sticky lg:top-24 lg:self-start">
+						<div className="bg-white/70 backdrop-blur-xl rounded-2xl border border-gray-200/50 shadow-xl p-6">
+							<nav className="space-y-6">
+								{navigationCategories.map((category, categoryIndex) => (
+									<div key={categoryIndex} className="space-y-2">
+										<h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3">
+											{category.title}
+										</h3>
+										<div className="space-y-1">
+											{category.items.map((item) => (
+												<NavLink
+													key={item.to}
+													to={item.to}
+													className={({ isActive }) => 
+														`group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+															item.isSubItem ? 'ml-4 pl-6 border-l-2 border-gray-200' : ''
+														} ${
+															isActive 
+																? `bg-gradient-to-r ${item.gradient} text-white shadow-lg transform scale-[1.02]` 
+																: 'text-gray-700 hover:bg-gray-100/80 hover:text-gray-900'
+														}`
+													}
+												>
+													{({ isActive }) => (
+														<>
+															<span className={`text-lg transition-transform duration-200 ${isActive ? '' : 'group-hover:scale-110'}`}>
+																{item.icon}
+															</span>
+															<span className="truncate">{item.label}</span>
+															{isActive && (
+																<div className="ml-auto w-2 h-2 bg-white/30 rounded-full"></div>
+															)}
+														</>
+													)}
+												</NavLink>
+											))}
+										</div>
+									</div>
+								))}
+							</nav>
+							
+							{/* Sidebar Footer */}
+							<div className="mt-8 pt-6 border-t border-gray-200/50">
+								<div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4">
+									<div className="flex items-center gap-3">
+										<div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+											<span className="text-white text-sm">✨</span>
+										</div>
+										<div>
+											<p className="text-sm font-medium text-gray-900">Pro Tips</p>
+											<p className="text-xs text-gray-600">Explore AI insights</p>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</aside>
 
-				{/* Content */}
-				<main style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-					<ErrorBoundary>
-						<Outlet />
-					</ErrorBoundary>
-				</main>
+					{/* Content Area */}
+					<main className="min-h-[calc(100vh-200px)]">
+						<ErrorBoundary>
+							<Outlet />
+						</ErrorBoundary>
+					</main>
+				</div>
 			</div>
 
 			<BottomNav />
