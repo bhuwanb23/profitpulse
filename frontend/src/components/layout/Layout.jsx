@@ -18,7 +18,7 @@ export default function Layout() {
 	// Check if we're on a ticket-related page
 	const isTicketPage = location.pathname.startsWith('/ticket')
 
-	// Enhanced navigation items with client and ticket sub-pages
+	// Enhanced navigation items with client, ticket, and invoice sub-pages
 	const getNavigationItems = () => {
 		const baseItems = [
 			{ to: '/dashboard', label: 'Dashboard', icon: '🏠' },
@@ -44,9 +44,20 @@ export default function Layout() {
 			)
 		}
 
+		// Add invoices section
+		baseItems.push({ to: '/invoices', label: 'Invoices', icon: '💰' })
+
+		// Add invoice sub-pages if we're on an invoice page
+		const isInvoicePage = location.pathname.startsWith('/invoice')
+		if (isInvoicePage) {
+			baseItems.push(
+				{ to: '/invoice-analytics', label: '📊 Invoice Analytics', icon: '📊', isSubItem: true },
+				{ to: '/invoice-operations', label: '⚙️ Invoice Operations', icon: '⚙️', isSubItem: true }
+			)
+		}
+
 		// Add remaining items
 		baseItems.push(
-			{ to: '/invoices', label: 'Invoices', icon: '💰' },
 			{ to: '/analytics', label: 'Analytics', icon: '📊' },
 			{ to: '/reports', label: 'Reports', icon: '📑' },
 			{ to: '/notifications', label: 'Notifications', icon: '🔔' },

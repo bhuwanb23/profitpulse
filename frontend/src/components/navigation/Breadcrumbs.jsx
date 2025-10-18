@@ -10,6 +10,8 @@ const labelMap = {
 	'ticket-analytics': 'Ticket Analytics',
 	'ticket-operations': 'Ticket Operations',
 	invoices: 'Invoices',
+	'invoice-analytics': 'Invoice Analytics',
+	'invoice-operations': 'Invoice Operations',
 	analytics: 'Analytics',
 	'billing-analytics': 'Billing Analytics',
 	'budget-management': 'Budget Management',

@@ -16,6 +16,9 @@ import ClientServicesPage from './pages/ClientServices'
 import ClientAnalyticsPage from './pages/ClientAnalytics'
 import TicketAnalyticsPage from './pages/TicketAnalytics'
 import TicketOperationsPage from './pages/TicketOperations'
+import InvoiceAnalyticsPage from './pages/InvoiceAnalytics'
+import InvoiceOperationsPage from './pages/InvoiceOperations'
+import InvoiceDetail from './pages/InvoiceDetail'
 import BillingAnalyticsPage from './pages/BillingAnalytics'
 import BudgetManagementPage from './pages/BudgetManagement'
 import Reports from './pages/Reports'
@@ -40,6 +43,9 @@ function App() {
 							<Route path="ticket-analytics" element={<TicketAnalyticsPage />} />
 							<Route path="ticket-operations" element={<TicketOperationsPage />} />
 							<Route path="invoices/*" element={<Invoices />} />
+							<Route path="invoice-analytics" element={<InvoiceAnalyticsPage />} />
+							<Route path="invoice-operations" element={<InvoiceOperationsPage />} />
+							<Route path="invoices/:id" element={<InvoiceDetail />} />
 							<Route path="analytics" element={<Analytics />} />
 							<Route path="reports" element={<Reports />} />
 							<Route path="billing-analytics" element={<BillingAnalyticsPage />} />
