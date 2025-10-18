@@ -166,23 +166,30 @@ export default function ClientAnalytics() {
 					<CardContent>
 						<div className="h-80">
 							<ResponsiveContainer width="100%" height="100%">
-								<PieChart>
+								<PieChart width={400} height={350}>
 									<Pie
-										data={revenueBreakdown}
+										data={revenueBreakdown || []}
 										cx="50%"
 										cy="50%"
 										outerRadius={100}
 										innerRadius={40}
 										paddingAngle={2}
 										dataKey="revenue"
+										nameKey="service"
 									>
-										{revenueBreakdown.map((entry, index) => (
-											<Cell key={`cell-${index}`} fill={entry.color} />
+										{(revenueBreakdown || []).map((entry, index) => (
+											<Cell key={`cell-${index}`} fill={entry.color || '#8884d8'} />
 										))}
 									</Pie>
 									<Tooltip 
 										formatter={(value) => [formatCurrency(value), 'Revenue']}
 										labelFormatter={(label) => `Service: ${label}`}
+										contentStyle={{ 
+											backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+											border: '1px solid #e5e7eb',
+											borderRadius: '8px',
+											backdropFilter: 'blur(8px)'
+										}}
 									/>
 								</PieChart>
 							</ResponsiveContainer>

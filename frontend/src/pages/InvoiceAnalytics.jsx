@@ -491,21 +491,22 @@ export default function InvoiceAnalyticsPage() {
 					<CardContent>
 						<div className="h-64">
 							<ResponsiveContainer width="100%" height="100%">
-								<PieChart>
+								<PieChart width={400} height={300}>
 									<Pie
-										data={analyticsData.statusStats}
+										data={analyticsData.statusStats || []}
 										cx="50%"
 										cy="50%"
 										outerRadius={85}
 										innerRadius={50}
 										paddingAngle={3}
 										dataKey="value"
+										nameKey="name"
 									>
-										{analyticsData.statusStats.map((entry, index) => (
+										{(analyticsData.statusStats || []).map((entry, index) => (
 											<Cell 
 												key={`cell-${index}`} 
-												fill={entry.fill}
-												stroke={entry.fill}
+												fill={entry.fill || '#8884d8'}
+												stroke={entry.fill || '#8884d8'}
 												strokeWidth={2}
 											/>
 										))}

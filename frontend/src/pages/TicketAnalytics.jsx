@@ -283,25 +283,32 @@ export default function TicketAnalyticsPage() {
 					<CardContent>
 						<div className="h-64 sm:h-72">
 							<ResponsiveContainer width="100%" height="100%">
-								<PieChart>
+								<PieChart width={400} height={300}>
 									<Pie
-										data={analyticsData.categoryStats}
+										data={analyticsData.categoryStats || []}
 										cx="50%"
 										cy="50%"
 										outerRadius={80}
 										innerRadius={40}
 										paddingAngle={2}
 										dataKey="count"
+										nameKey="name"
 										label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
 										labelLine={false}
 									>
-										{analyticsData.categoryStats.map((entry, index) => (
-											<Cell key={`cell-${index}`} fill={entry.color} />
+										{(analyticsData.categoryStats || []).map((entry, index) => (
+											<Cell key={`cell-${index}`} fill={entry.color || '#8884d8'} />
 										))}
 									</Pie>
 									<Tooltip 
 										formatter={(value) => [value, 'Tickets']}
 										labelFormatter={(label) => `Category: ${label}`}
+										contentStyle={{ 
+											backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+											border: '1px solid #e5e7eb',
+											borderRadius: '8px',
+											backdropFilter: 'blur(8px)'
+										}}
 									/>
 								</PieChart>
 							</ResponsiveContainer>

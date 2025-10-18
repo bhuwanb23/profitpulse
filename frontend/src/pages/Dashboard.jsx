@@ -256,21 +256,29 @@ export default function Dashboard() {
 						<h2 className="text-xl font-semibold text-gray-900 mb-6">Ticket Status Overview</h2>
 						<div className="h-64">
 							<ResponsiveContainer width="100%" height="100%">
-								<PieChart>
+								<PieChart width={400} height={300}>
 									<Pie
-										data={ticketData}
+										data={ticketData || []}
 										cx="50%"
 										cy="50%"
 										innerRadius={60}
 										outerRadius={100}
 										paddingAngle={5}
 										dataKey="value"
+										nameKey="name"
 									>
-										{ticketData.map((entry, index) => (
-											<Cell key={`cell-${index}`} fill={entry.color} />
+										{(ticketData || []).map((entry, index) => (
+											<Cell key={`cell-${index}`} fill={entry.color || '#8884d8'} />
 										))}
 									</Pie>
-									<Tooltip />
+									<Tooltip 
+										contentStyle={{ 
+											backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+											border: '1px solid #e5e7eb',
+											borderRadius: '8px',
+											backdropFilter: 'blur(8px)'
+										}}
+									/>
 								</PieChart>
 							</ResponsiveContainer>
 						</div>

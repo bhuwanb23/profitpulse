@@ -16,30 +16,37 @@ export function CustomerSegmentsChart({ data }) {
 			<CardContent>
 				<div className="h-64">
 					<ResponsiveContainer width="100%" height="100%">
-						<PieChart>
+						<PieChart width={400} height={300}>
 							<Pie
-								data={data}
+								data={data || []}
 								cx="50%"
 								cy="50%"
 								outerRadius={85}
 								innerRadius={50}
 								paddingAngle={3}
 								dataKey="value"
+								nameKey="name"
 							>
-								{data.map((entry, index) => (
+								{(data || []).map((entry, index) => (
 									<Cell 
 										key={`cell-${index}`} 
-										fill={entry.fill}
-										stroke={entry.fill}
+										fill={entry.fill || '#8884d8'}
+										stroke={entry.fill || '#8884d8'}
 										strokeWidth={2}
 									/>
 								))}
 							</Pie>
 							<Tooltip 
 								formatter={(value, name, props) => [
-									`${value}% (${props.payload.count} customers)`,
+									`${value}% (${props.payload?.count || 0} customers)`,
 									name
 								]}
+								contentStyle={{ 
+									backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+									border: '1px solid #e5e7eb',
+									borderRadius: '8px',
+									backdropFilter: 'blur(8px)'
+								}}
 							/>
 							<Legend 
 								verticalAlign="bottom" 

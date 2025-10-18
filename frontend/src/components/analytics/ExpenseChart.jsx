@@ -16,22 +16,29 @@ export function ExpenseChart({ data, formatCurrency }) {
 			<CardContent>
 				<div className="h-64">
 					<ResponsiveContainer width="100%" height="100%">
-						<PieChart>
+						<PieChart width={400} height={300}>
 							<Pie
-								data={data}
+								data={data || []}
 								cx="50%"
 								cy="50%"
 								outerRadius={80}
 								dataKey="amount"
+								nameKey="category"
 								label={({ category, percentage }) => `${category}: ${percentage}%`}
 								labelLine={false}
 							>
-								{data.map((entry, index) => (
-									<Cell key={`cell-${index}`} fill={entry.fill} />
+								{(data || []).map((entry, index) => (
+									<Cell key={`cell-${index}`} fill={entry.fill || '#8884d8'} />
 								))}
 							</Pie>
 							<Tooltip 
-								formatter={(value) => [formatCurrency(value), 'Amount']}
+								formatter={(value) => [formatCurrency ? formatCurrency(value) : `$${value}`, 'Amount']}
+								contentStyle={{ 
+									backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+									border: '1px solid #e5e7eb',
+									borderRadius: '8px',
+									backdropFilter: 'blur(8px)'
+								}}
 							/>
 						</PieChart>
 					</ResponsiveContainer>

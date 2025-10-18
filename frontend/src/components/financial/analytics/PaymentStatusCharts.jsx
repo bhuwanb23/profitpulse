@@ -15,11 +15,25 @@ export default function PaymentStatusCharts() {
 			<h2 className="font-semibold">Payment Status</h2>
 			<div className="mt-4 h-72">
 				<ResponsiveContainer width="100%" height="100%">
-					<PieChart>
-						<Pie data={data} dataKey="value" nameKey="name" outerRadius={100}>
-							{data.map((e) => <Cell key={e.name} fill={COLORS[e.name] || '#ccc'} />)}
+					<PieChart width={400} height={300}>
+						<Pie 
+							data={data || []} 
+							dataKey="value" 
+							nameKey="name" 
+							outerRadius={100}
+							cx="50%"
+							cy="50%"
+						>
+							{(data || []).map((e) => <Cell key={e.name} fill={COLORS[e.name] || '#8884d8'} />)}
 						</Pie>
-						<Tooltip />
+						<Tooltip 
+							contentStyle={{ 
+								backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+								border: '1px solid #e5e7eb',
+								borderRadius: '8px',
+								backdropFilter: 'blur(8px)'
+							}}
+						/>
 						<Legend />
 					</PieChart>
 				</ResponsiveContainer>
