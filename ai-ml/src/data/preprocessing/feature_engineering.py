@@ -16,6 +16,10 @@ from datetime import datetime
 # Import the new modular feature engineering system
 from .modular_feature_engineering.orchestrator import extract_all_features
 
+# Import the client genome system
+from .client_genome.genome_creator import GenomeCreator
+from .client_genome.genome_orchestrator import GenomeOrchestrator
+
 logger = logging.getLogger(__name__)
 
 
@@ -267,7 +271,8 @@ def engineer_features(df: pd.DataFrame,
                                        'use_modular_system': True,  # Enable new modular system
                                        'financial_features': True,  # Enable financial features
                                        'operational_features': True,  # Enable operational features
-                                       'behavioral_features': True  # Enable behavioral features
+                                       'behavioral_features': True,  # Enable behavioral features
+                                       'create_genome_vectors': True  # Enable genome vector creation
                                    }
         
     Returns:
@@ -341,5 +346,50 @@ def engineer_features(df: pd.DataFrame,
                 feature_engineering_config['binned_features']
             )
     
+    # Create genome vectors if requested
+    if feature_engineering_config.get('create_genome_vectors', False):
+        df_engineered = create_genome_vectors(df_engineered, feature_engineering_config)
+    
     logger.info("Feature engineering pipeline completed")
     return df_engineered
+
+
+def create_genome_vectors(df: pd.DataFrame, 
+                        config: dict) -> pd.DataFrame:
+    """
+    Create client genome vectors from engineered features
+    
+    Args:
+        df: Input DataFrame with engineered features
+        config: Configuration dictionary
+        
+    Returns:
+        DataFrame with genome vectors added as new columns
+    """
+    logger.info("Creating client genome vectors")
+    
+    try:
+        # Initialize genome orchestrator
+        orchestrator = GenomeOrchestrator()
+        
+        # Process client data through genome pipeline
+        client_genomes = orchestrator.process_client_data(df)
+        
+        # Add genome vectors to the DataFrame
+        df_genomes = df.copy()
+        
+        # Add genome vector columns (50 dimensions)
+        for i in range(50):
+            genome_col_name = f"genome_dimension_{i}"
+            df_genomes[genome_col_name] = df_genomes.apply(
+                lambda row: client_genomes.get(row.get('client_id', ''), np.zeros(50))[i] 
+                if 'client_id' in df_genomes.columns else 0,
+                axis=1
+            )
+        
+        logger.info(f"Created genome vectors for {len(client_genomes)} clients")
+        return df_genomes
+        
+    except Exception as e:
+        logger.error(f"Failed to create genome vectors: {e}")
+        return df
