@@ -9,9 +9,9 @@ import json
 from datetime import datetime, timedelta
 from typing import Dict, List, Any
 
-from src.data.superops_client import create_superops_client, SuperOpsConfig
-from src.data.data_extractor import create_data_extractor
-from src.data.streaming_service import create_streaming_service, StreamingConfig
+from src.data.ingestion.superops_client import create_superops_client, SuperOpsConfig
+from src.data.ingestion.data_extractor import create_data_extractor
+from src.data.ingestion.streaming_service import create_streaming_service, StreamingConfig
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -249,9 +249,9 @@ async def test_data_quality():
         await extractor.initialize()
         
         # Extract sample data
-        tickets = await extractor.extract_ticket_data(limit=20)
-        clients = await extractor.extract_client_data(limit=10)
-        technicians = await extractor.extract_technician_data(limit=5)
+        tickets = await extractor.extract_ticket_data()
+        clients = await extractor.extract_client_data()
+        technicians = await extractor.extract_technician_data()
         
         # Test data quality checks
         logger.info("Testing data quality checks...")

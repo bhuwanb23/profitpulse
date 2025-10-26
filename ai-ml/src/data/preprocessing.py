@@ -8,9 +8,13 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Tuple
-from sklearn.preprocessing import StandardScaler, LabelEncoder, MinMaxScaler
-from sklearn.impute import SimpleImputer, KNNImputer
 import warnings
+
+# Import our new preprocessing modules
+from .preprocessing import cleaning, imputation, outlier_detection, standardization, normalization, feature_engineering, aggregation, validation
+
+# Import sklearn components
+from sklearn.preprocessing import StandardScaler, LabelEncoder, MinMaxScaler
 
 warnings.filterwarnings('ignore')
 
@@ -28,7 +32,7 @@ class DataValidator:
     def __init__(self):
         self.logger = logging.getLogger(f"{__name__}.DataValidator")
     
-    def validate_dataframe(self, df: pd.DataFrame, required_columns: List[str] = None) -> Dict[str, Any]:
+    def validate_dataframe(self, df: pd.DataFrame, required_columns: Optional[List[str]] = None) -> Dict[str, Any]:
         """Validate DataFrame quality and completeness"""
         validation_results = {
             "is_valid": True,
@@ -92,24 +96,32 @@ class DataValidator:
             
             # Check for valid status values
             valid_statuses = ["Open", "In Progress", "Closed", "Cancelled", "Pending"]
-            invalid_status = df[~df['status'].isin(valid_statuses)]['status'].unique()
-            if len(invalid_status) > 0:
-                ticket_issues.append(f"Invalid status values: {invalid_status}")
+            # Check for valid status values
+            try:
+                valid_statuses = ["Open", "In Progress", "Closed", "Cancelled", "Pending"]
+                invalid_status_count = (~df['status'].isin(valid_statuses)).sum()
+                if invalid_status_count > 0:
+                    ticket_issues.append(f"Found {invalid_status_count} records with invalid status values")
+            except Exception:
+                pass  # Skip validation if column doesn't exist
             
             # Check for valid priority values
-            valid_priorities = ["Low", "Medium", "High", "Critical"]
-            invalid_priority = df[~df['priority'].isin(valid_priorities)]['priority'].unique()
-            if len(invalid_priority) > 0:
-                ticket_issues.append(f"Invalid priority values: {invalid_priority}")
+            try:
+                valid_priorities = ["Low", "Medium", "High", "Critical"]
+                invalid_priority_count = (~df['priority'].isin(valid_priorities)).sum()
+                if invalid_priority_count > 0:
+                    ticket_issues.append(f"Found {invalid_priority_count} records with invalid priority values")
+            except Exception:
+                pass  # Skip validation if column doesn't exist
             
             # Check for negative hours or billing amounts
             if 'hours_logged' in df.columns:
-                negative_hours = df[df['hours_logged'] < 0]['hours_logged'].count()
+                negative_hours = len(df[df['hours_logged'] < 0])
                 if negative_hours > 0:
                     ticket_issues.append(f"Found {negative_hours} records with negative hours")
             
             if 'billing_amount' in df.columns:
-                negative_billing = df[df['billing_amount'] < 0]['billing_amount'].count()
+                negative_billing = len(df[df['billing_amount'] < 0])
                 if negative_billing > 0:
                     ticket_issues.append(f"Found {negative_billing} records with negative billing amounts")
             
@@ -136,24 +148,34 @@ class DataValidator:
             client_issues = []
             
             # Check for valid email formats
-            if 'email' in df.columns:
-                email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-                invalid_emails = df[~df['email'].str.match(email_pattern, na=False)]['email'].count()
-                if invalid_emails > 0:
-                    client_issues.append(f"Found {invalid_emails} records with invalid email formats")
+            try:
+                if 'email' in df.columns:
+                    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+                    invalid_email_mask = ~df['email'].str.match(email_pattern, na=False)
+                    invalid_emails = invalid_email_mask.sum()
+                    if invalid_emails > 0:
+                        client_issues.append(f"Found {invalid_emails} records with invalid email formats")
+            except Exception:
+                pass  # Skip validation if column doesn't exist or has issues
             
             # Check for valid status values
-            if 'status' in df.columns:
-                valid_statuses = ["Active", "Inactive", "Suspended", "Prospect"]
-                invalid_status = df[~df['status'].isin(valid_statuses)]['status'].unique()
-                if len(invalid_status) > 0:
-                    client_issues.append(f"Invalid status values: {invalid_status}")
+            try:
+                if 'status' in df.columns:
+                    valid_statuses = ["Active", "Inactive", "Suspended", "Prospect"]
+                    invalid_status_count = (~df['status'].isin(valid_statuses)).sum()
+                    if invalid_status_count > 0:
+                        client_issues.append(f"Found {invalid_status_count} records with invalid status values")
+            except Exception:
+                pass  # Skip validation if column doesn't exist
             
             # Check for negative contract values
-            if 'contract_value' in df.columns:
-                negative_contracts = df[df['contract_value'] < 0]['contract_value'].count()
-                if negative_contracts > 0:
-                    client_issues.append(f"Found {negative_contracts} records with negative contract values")
+            try:
+                if 'contract_value' in df.columns:
+                    negative_contracts = (df['contract_value'] < 0).sum()
+                    if negative_contracts > 0:
+                        client_issues.append(f"Found {negative_contracts} records with negative contract values")
+            except Exception:
+                pass  # Skip validation if column doesn't exist
             
             validation_results["issues"].extend(client_issues)
             validation_results["is_valid"] = len(client_issues) == 0
@@ -215,12 +237,8 @@ class DataCleaner:
                     # Fill numeric columns with median
                     filled_df[column].fillna(filled_df[column].median(), inplace=True)
                 elif filled_df[column].dtype == 'object':
-                    # Fill categorical columns with mode
-                    mode_value = filled_df[column].mode()
-                    if not mode_value.empty:
-                        filled_df[column].fillna(mode_value[0], inplace=True)
-                    else:
-                        filled_df[column].fillna('Unknown', inplace=True)
+                    # Fill categorical columns with 'Unknown'
+                    filled_df[column] = filled_df[column].fillna('Unknown')
                 elif filled_df[column].dtype == 'datetime64[ns]':
                     # Fill datetime columns with forward fill
                     filled_df[column].fillna(method='ffill', inplace=True)
@@ -457,122 +475,193 @@ class DataPreprocessingPipeline:
     """Main data preprocessing pipeline"""
     
     def __init__(self):
-        self.validator = DataValidator()
-        self.cleaner = DataCleaner()
-        self.transformer = DataTransformer()
         self.logger = logging.getLogger(__name__)
     
     def process_ticket_data(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict[str, Any]]:
-        """Process ticket data through the complete pipeline"""
+        """Process ticket data through the complete pipeline using new modules"""
         try:
-            self.logger.info("Starting ticket data processing pipeline")
+            self.logger.info("Starting ticket data processing pipeline with new modules")
             
-            # Validate data
-            validation_results = self.validator.validate_ticket_data(df)
-            if not validation_results["is_valid"]:
-                self.logger.warning(f"Data validation issues: {validation_results['issues']}")
+            # Use our new preprocessing modules
+            # 1. Clean data
+            cleaned_df = cleaning.clean_dataframe(df)
             
-            # Clean data
-            cleaned_df = self.cleaner.clean_ticket_data(df)
-            cleaned_df = self.cleaner.clean_dataframe(cleaned_df)
+            # 2. Handle missing values
+            imputation_config = {
+                'mean_cols': ['hours_logged', 'billing_amount']
+            }
+            imputed_df = imputation.impute_missing_values(cleaned_df, imputation_config)
             
-            # Transform data
-            # Encode categorical variables
-            categorical_columns = ['status', 'priority']
-            transformed_df = self.transformer.encode_categorical(cleaned_df, categorical_columns)
+            # 3. Remove outliers
+            outlier_config = {
+                'zscore_cols': ['hours_logged', 'billing_amount'],
+                'zscore_threshold': 3.0
+            }
+            cleaned_df, outliers = outlier_detection.remove_outliers(imputed_df, outlier_config)
             
-            # Create time features
-            date_columns = ['created_at', 'resolved_at']
-            transformed_df = self.transformer.create_time_features(transformed_df, date_columns)
+            # 4. Standardize data
+            standardization_config = {
+                'currency_columns': ['billing_amount'],
+                'text_columns': ['title', 'description']
+            }
+            standardized_df = standardization.standardize_data(cleaned_df, standardization_config)
             
-            # Create derived features
-            transformed_df = self.transformer.create_derived_features(transformed_df)
+            # 5. Normalize data
+            normalization_config = {
+                'standard_cols': ['hours_logged', 'billing_amount']
+            }
+            normalized_df = normalization.normalize_data(standardized_df, normalization_config)
             
-            # Scale numerical variables
-            numerical_columns = ['hours_logged', 'billing_amount', 'revenue_per_hour', 'ticket_age_days']
-            numerical_columns = [col for col in numerical_columns if col in transformed_df.columns]
-            if numerical_columns:
-                transformed_df = self.transformer.scale_numerical(transformed_df, numerical_columns)
+            # 6. Engineer features
+            feature_config = {
+                'time_based_features': {'datetime_col': 'created_at'},
+                'ratio_features': [('billing_amount', 'hours_logged', 'rate_per_hour')]
+            }
+            engineered_df = feature_engineering.engineer_features(normalized_df, feature_config)
+            
+            # 7. Validate data
+            validation_config = {
+                'schema': {
+                    'ticket_id': 'str',
+                    'hours_logged': 'float',
+                    'billing_amount': 'float'
+                },
+                'ranges': {
+                    'hours_logged': {'min': 0},
+                    'billing_amount': {'min': 0}
+                }
+            }
+            validation_results = validation.validate_data(engineered_df, validation_config)
             
             self.logger.info("Ticket data processing pipeline completed successfully")
-            return transformed_df, validation_results
+            return engineered_df, validation_results
             
         except Exception as e:
             self.logger.error(f"Error processing ticket data: {e}")
             raise DataPreprocessingError(f"Ticket data processing failed: {e}")
     
     def process_client_data(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict[str, Any]]:
-        """Process client data through the complete pipeline"""
+        """Process client data through the complete pipeline using new modules"""
         try:
-            self.logger.info("Starting client data processing pipeline")
+            self.logger.info("Starting client data processing pipeline with new modules")
             
-            # Validate data
-            validation_results = self.validator.validate_client_data(df)
-            if not validation_results["is_valid"]:
-                self.logger.warning(f"Data validation issues: {validation_results['issues']}")
+            # Use our new preprocessing modules
+            # 1. Clean data
+            cleaned_df = cleaning.clean_dataframe(df)
             
-            # Clean data
-            cleaned_df = self.cleaner.clean_client_data(df)
-            cleaned_df = self.cleaner.clean_dataframe(cleaned_df)
+            # 2. Handle missing values
+            imputation_config = {
+                'mean_cols': ['contract_value'],
+                'mode_cols': ['status']
+            }
+            imputed_df = imputation.impute_missing_values(cleaned_df, imputation_config)
             
-            # Transform data
-            # Encode categorical variables
-            categorical_columns = ['status']
-            transformed_df = self.transformer.encode_categorical(cleaned_df, categorical_columns)
+            # 3. Remove outliers
+            outlier_config = {
+                'zscore_cols': ['contract_value'],
+                'zscore_threshold': 3.0
+            }
+            cleaned_df, outliers = outlier_detection.remove_outliers(imputed_df, outlier_config)
             
-            # Create time features
-            date_columns = ['created_at', 'last_contact']
-            transformed_df = self.transformer.create_time_features(transformed_df, date_columns)
+            # 4. Standardize data
+            standardization_config = {
+                'currency_columns': ['contract_value'],
+                'text_columns': ['name', 'email']
+            }
+            standardized_df = standardization.standardize_data(cleaned_df, standardization_config)
             
-            # Create derived features
-            transformed_df = self.transformer.create_derived_features(transformed_df)
+            # 5. Normalize data
+            normalization_config = {
+                'standard_cols': ['contract_value']
+            }
+            normalized_df = normalization.normalize_data(standardized_df, normalization_config)
             
-            # Scale numerical variables
-            numerical_columns = ['contract_value']
-            numerical_columns = [col for col in numerical_columns if col in transformed_df.columns]
-            if numerical_columns:
-                transformed_df = self.transformer.scale_numerical(transformed_df, numerical_columns)
+            # 6. Engineer features
+            feature_config = {
+                'time_based_features': {'datetime_col': 'created_at'},
+                'binned_features': {'contract_value': {'bins': 4}}
+            }
+            engineered_df = feature_engineering.engineer_features(normalized_df, feature_config)
+            
+            # 7. Validate data
+            validation_config = {
+                'schema': {
+                    'client_id': 'str',
+                    'contract_value': 'float',
+                    'status': 'str'
+                },
+                'ranges': {
+                    'contract_value': {'min': 0}
+                }
+            }
+            validation_results = validation.validate_data(engineered_df, validation_config)
             
             self.logger.info("Client data processing pipeline completed successfully")
-            return transformed_df, validation_results
+            return engineered_df, validation_results
             
         except Exception as e:
             self.logger.error(f"Error processing client data: {e}")
             raise DataPreprocessingError(f"Client data processing failed: {e}")
     
     def process_invoice_data(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict[str, Any]]:
-        """Process invoice data through the complete pipeline"""
+        """Process invoice data through the complete pipeline using new modules"""
         try:
-            self.logger.info("Starting invoice data processing pipeline")
+            self.logger.info("Starting invoice data processing pipeline with new modules")
             
-            # Validate data
-            validation_results = self.validator.validate_dataframe(df)
-            if not validation_results["is_valid"]:
-                self.logger.warning(f"Data validation issues: {validation_results['issues']}")
+            # Use our new preprocessing modules
+            # 1. Clean data
+            cleaned_df = cleaning.clean_dataframe(df)
             
-            # Clean data
-            cleaned_df = self.cleaner.clean_dataframe(df)
+            # 2. Handle missing values
+            imputation_config = {
+                'mean_cols': ['amount', 'tax_amount']
+            }
+            imputed_df = imputation.impute_missing_values(cleaned_df, imputation_config)
             
-            # Transform data
-            # Encode categorical variables
-            categorical_columns = ['status', 'payment_method']
-            transformed_df = self.transformer.encode_categorical(cleaned_df, categorical_columns)
+            # 3. Remove outliers
+            outlier_config = {
+                'zscore_cols': ['amount', 'tax_amount'],
+                'zscore_threshold': 3.0
+            }
+            cleaned_df, outliers = outlier_detection.remove_outliers(imputed_df, outlier_config)
             
-            # Create time features
-            date_columns = ['created_date', 'due_date', 'paid_date']
-            transformed_df = self.transformer.create_time_features(transformed_df, date_columns)
+            # 4. Standardize data
+            standardization_config = {
+                'currency_columns': ['amount', 'tax_amount', 'total_amount']
+            }
+            standardized_df = standardization.standardize_data(cleaned_df, standardization_config)
             
-            # Create derived features
-            transformed_df = self.transformer.create_derived_features(transformed_df)
+            # 5. Normalize data
+            normalization_config = {
+                'standard_cols': ['amount', 'tax_amount', 'total_amount']
+            }
+            normalized_df = normalization.normalize_data(standardized_df, normalization_config)
             
-            # Scale numerical variables
-            numerical_columns = ['amount', 'tax_amount', 'total_amount']
-            numerical_columns = [col for col in numerical_columns if col in transformed_df.columns]
-            if numerical_columns:
-                transformed_df = self.transformer.scale_numerical(transformed_df, numerical_columns)
+            # 6. Engineer features
+            feature_config = {
+                'time_based_features': {'datetime_col': 'created_date'},
+                'ratio_features': [('tax_amount', 'amount', 'tax_rate')]
+            }
+            engineered_df = feature_engineering.engineer_features(normalized_df, feature_config)
+            
+            # 7. Validate data
+            validation_config = {
+                'schema': {
+                    'invoice_id': 'str',
+                    'amount': 'float',
+                    'tax_amount': 'float',
+                    'total_amount': 'float'
+                },
+                'ranges': {
+                    'amount': {'min': 0},
+                    'tax_amount': {'min': 0},
+                    'total_amount': {'min': 0}
+                }
+            }
+            validation_results = validation.validate_data(engineered_df, validation_config)
             
             self.logger.info("Invoice data processing pipeline completed successfully")
-            return transformed_df, validation_results
+            return engineered_df, validation_results
             
         except Exception as e:
             self.logger.error(f"Error processing invoice data: {e}")

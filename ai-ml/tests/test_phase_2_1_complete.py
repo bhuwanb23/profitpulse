@@ -13,9 +13,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from data.quickbooks_client import create_quickbooks_client
-from data.internal_db_connector import create_internal_db_connector
-from data.comprehensive_extractor import create_comprehensive_extractor
+from src.data.ingestion.quickbooks_client import create_quickbooks_client
+from src.data.ingestion.internal_db_connector import create_internal_db_connector
+from src.data.ingestion.comprehensive_extractor import create_comprehensive_extractor
 
 # Set up logging
 logging.basicConfig(
