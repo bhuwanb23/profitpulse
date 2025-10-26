@@ -1,6 +1,9 @@
 """
 Feature Engineering
 Module for creating new features and transforming existing ones
+
+This module provides both the original feature engineering functions and
+integration with the new modular feature engineering system.
 """
 
 import pandas as pd
@@ -9,6 +12,9 @@ from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 from typing import List, Dict, Optional, Union, Tuple, Any
 import logging
 from datetime import datetime
+
+# Import the new modular feature engineering system
+from .modular_feature_engineering.orchestrator import extract_all_features
 
 logger = logging.getLogger(__name__)
 
@@ -244,6 +250,9 @@ def engineer_features(df: pd.DataFrame,
     """
     Comprehensive feature engineering pipeline
     
+    This function maintains backward compatibility with the original feature engineering
+    functions while also supporting the new modular feature engineering system.
+    
     Args:
         df: Input DataFrame
         feature_engineering_config: Dictionary specifying feature engineering strategies
@@ -254,7 +263,11 @@ def engineer_features(df: pd.DataFrame,
                                        'ratio_features': [('revenue', 'cost', 'profit_margin')],
                                        'polynomial_features': {'cols': ['value'], 'degree': 2},
                                        'interaction_features': [('price', 'quantity', 'total_value')],
-                                       'binned_features': {'age': {'bins': 5}}
+                                       'binned_features': {'age': {'bins': 5}},
+                                       'use_modular_system': True,  # Enable new modular system
+                                       'financial_features': True,  # Enable financial features
+                                       'operational_features': True,  # Enable operational features
+                                       'behavioral_features': True  # Enable behavioral features
                                    }
         
     Returns:
@@ -263,64 +276,70 @@ def engineer_features(df: pd.DataFrame,
     logger.info("Starting feature engineering pipeline")
     df_engineered = df.copy()
     
-    # Apply one-hot encoding
-    if 'one_hot_cols' in feature_engineering_config:
-        drop_first = feature_engineering_config.get('one_hot_drop_first', False)
-        df_engineered = one_hot_encoding(
-            df_engineered, 
-            feature_engineering_config['one_hot_cols'], 
-            drop_first
-        )
-    
-    # Apply label encoding
-    if 'label_cols' in feature_engineering_config:
-        df_engineered = label_encoding(
-            df_engineered, 
-            feature_engineering_config['label_cols']
-        )
-    
-    # Create time-based features
-    if 'time_based_features' in feature_engineering_config:
-        datetime_col = feature_engineering_config['time_based_features'].get('datetime_col')
-        include_features = feature_engineering_config['time_based_features'].get('include_features')
-        if datetime_col:
-            df_engineered = create_time_based_features(
+    # Check if we should use the new modular system
+    if feature_engineering_config.get('use_modular_system', False):
+        # Use the new modular feature engineering system
+        df_engineered = extract_all_features(df_engineered, feature_engineering_config)
+    else:
+        # Use the original feature engineering functions (backward compatibility)
+        # Apply one-hot encoding
+        if 'one_hot_cols' in feature_engineering_config:
+            drop_first = feature_engineering_config.get('one_hot_drop_first', False)
+            df_engineered = one_hot_encoding(
                 df_engineered, 
-                datetime_col, 
-                include_features
+                feature_engineering_config['one_hot_cols'], 
+                drop_first
             )
-    
-    # Create ratio features
-    if 'ratio_features' in feature_engineering_config:
-        df_engineered = create_ratio_features(
-            df_engineered, 
-            feature_engineering_config['ratio_features']
-        )
-    
-    # Create polynomial features
-    if 'polynomial_features' in feature_engineering_config:
-        poly_config = feature_engineering_config['polynomial_features']
-        cols = poly_config.get('cols', [])
-        degree = poly_config.get('degree', 2)
-        df_engineered = create_polynomial_features(
-            df_engineered, 
-            cols, 
-            degree
-        )
-    
-    # Create interaction features
-    if 'interaction_features' in feature_engineering_config:
-        df_engineered = create_interaction_features(
-            df_engineered, 
-            feature_engineering_config['interaction_features']
-        )
-    
-    # Create binned features
-    if 'binned_features' in feature_engineering_config:
-        df_engineered = create_binned_features(
-            df_engineered, 
-            feature_engineering_config['binned_features']
-        )
+        
+        # Apply label encoding
+        if 'label_cols' in feature_engineering_config:
+            df_engineered = label_encoding(
+                df_engineered, 
+                feature_engineering_config['label_cols']
+            )
+        
+        # Create time-based features
+        if 'time_based_features' in feature_engineering_config:
+            datetime_col = feature_engineering_config['time_based_features'].get('datetime_col')
+            include_features = feature_engineering_config['time_based_features'].get('include_features')
+            if datetime_col:
+                df_engineered = create_time_based_features(
+                    df_engineered, 
+                    datetime_col, 
+                    include_features
+                )
+        
+        # Create ratio features
+        if 'ratio_features' in feature_engineering_config:
+            df_engineered = create_ratio_features(
+                df_engineered, 
+                feature_engineering_config['ratio_features']
+            )
+        
+        # Create polynomial features
+        if 'polynomial_features' in feature_engineering_config:
+            poly_config = feature_engineering_config['polynomial_features']
+            cols = poly_config.get('cols', [])
+            degree = poly_config.get('degree', 2)
+            df_engineered = create_polynomial_features(
+                df_engineered, 
+                cols, 
+                degree
+            )
+        
+        # Create interaction features
+        if 'interaction_features' in feature_engineering_config:
+            df_engineered = create_interaction_features(
+                df_engineered, 
+                feature_engineering_config['interaction_features']
+            )
+        
+        # Create binned features
+        if 'binned_features' in feature_engineering_config:
+            df_engineered = create_binned_features(
+                df_engineered, 
+                feature_engineering_config['binned_features']
+            )
     
     logger.info("Feature engineering pipeline completed")
     return df_engineered

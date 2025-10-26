@@ -512,10 +512,34 @@ class DataPreprocessingPipeline:
             }
             normalized_df = normalization.normalize_data(standardized_df, normalization_config)
             
-            # 6. Engineer features
+            # 6. Engineer features using the new modular system
             feature_config = {
-                'time_based_features': {'datetime_col': 'created_at'},
-                'ratio_features': [('billing_amount', 'hours_logged', 'rate_per_hour')]
+                'use_modular_system': True,
+                'operational_features': True,
+                'financial_features': True,
+                'operational_config': {
+                    'ticket_resolution_time': True,
+                    'sla_compliance': True,
+                    'ticket_resolution_config': {
+                        'ticket_id_col': 'ticket_id',
+                        'created_date_col': 'created_at',
+                        'resolved_date_col': 'resolved_at'
+                    },
+                    'sla_compliance_config': {
+                        'ticket_id_col': 'ticket_id',
+                        'sla_target_hours_col': 'sla_hours',
+                        'actual_resolution_hours_col': 'hours_logged'
+                    }
+                },
+                'financial_config': {
+                    'revenue_per_client': True,
+                    'revenue_per_client_config': {
+                        'client_id_col': 'client_id',
+                        'revenue_col': 'billing_amount',
+                        'date_col': 'created_at',
+                        'frequency': 'monthly'
+                    }
+                }
             }
             engineered_df = feature_engineering.engineer_features(normalized_df, feature_config)
             
@@ -576,10 +600,37 @@ class DataPreprocessingPipeline:
             }
             normalized_df = normalization.normalize_data(standardized_df, normalization_config)
             
-            # 6. Engineer features
+            # 6. Engineer features using the new modular system
             feature_config = {
-                'time_based_features': {'datetime_col': 'created_at'},
-                'binned_features': {'contract_value': {'bins': 4}}
+                'use_modular_system': True,
+                'financial_features': True,
+                'behavioral_features': True,
+                'financial_config': {
+                    'revenue_per_client': True,
+                    'revenue_per_client_config': {
+                        'client_id_col': 'client_id',
+                        'revenue_col': 'contract_value',
+                        'date_col': 'created_at',
+                        'frequency': 'monthly'
+                    }
+                },
+                'behavioral_config': {
+                    'client_engagement': True,
+                    'churn_risk': True,
+                    'client_engagement_config': {
+                        'client_id_col': 'client_id',
+                        'login_count_col': 'login_count',
+                        'support_request_count_col': 'support_requests',
+                        'feature_usage_col': 'feature_usage'
+                    },
+                    'churn_risk_config': {
+                        'client_id_col': 'client_id',
+                        'engagement_score_col': 'engagement_score',
+                        'support_ticket_count_col': 'support_tickets',
+                        'contract_renewal_likelihood_col': 'renewal_likelihood',
+                        'payment_delinquency_col': 'payment_delinquency'
+                    }
+                }
             }
             engineered_df = feature_engineering.engineer_features(normalized_df, feature_config)
             
@@ -637,10 +688,31 @@ class DataPreprocessingPipeline:
             }
             normalized_df = normalization.normalize_data(standardized_df, normalization_config)
             
-            # 6. Engineer features
+            # 6. Engineer features using the new modular system
             feature_config = {
-                'time_based_features': {'datetime_col': 'created_date'},
-                'ratio_features': [('tax_amount', 'amount', 'tax_rate')]
+                'use_modular_system': True,
+                'financial_features': True,
+                'financial_config': {
+                    'revenue_per_client': True,
+                    'profit_margins_by_service': True,
+                    'billing_efficiency': True,
+                    'revenue_per_client_config': {
+                        'client_id_col': 'client_id',
+                        'revenue_col': 'amount',
+                        'date_col': 'created_date',
+                        'frequency': 'monthly'
+                    },
+                    'profit_margins_config': {
+                        'service_type_col': 'service_type',
+                        'revenue_col': 'amount',
+                        'cost_col': 'cost'
+                    },
+                    'billing_efficiency_config': {
+                        'billed_amount_col': 'amount',
+                        'actual_cost_col': 'cost',
+                        'expected_amount_col': 'expected_amount'
+                    }
+                }
             }
             engineered_df = feature_engineering.engineer_features(normalized_df, feature_config)
             
