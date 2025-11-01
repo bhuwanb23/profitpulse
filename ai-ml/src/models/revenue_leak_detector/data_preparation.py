@@ -6,6 +6,7 @@ Handles collection and preprocessing of invoice, billing, and service delivery d
 import logging
 import numpy as np
 import pandas as pd
+import os
 from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime, timedelta
 import warnings
@@ -57,12 +58,14 @@ class RevenueLeakDataPreparator:
         except Exception as e:
             logger.warning(f"Failed to initialize SuperOps client: {e}")
             
+        # Path to CSV data files
+        self.data_dir = "../../data/revenue_leak_detector"
         logger.info("Revenue Leak Data Preparator initialized")
     
     async def collect_invoice_data(self, start_date: Optional[datetime] = None, 
                                  end_date: Optional[datetime] = None) -> pd.DataFrame:
         """
-        Collect invoice and billing data from QuickBooks
+        Collect invoice and billing data from QuickBooks or CSV files
         
         Args:
             start_date: Start date for data collection
@@ -87,21 +90,18 @@ class RevenueLeakDataPreparator:
                     )
                     return pd.DataFrame(data.get('invoices', []))
                 else:
-                    # Return mock data for demonstration
-                    logger.warning("QuickBooks client not available, returning mock data")
-                    # Handle None values for start_date and end_date
-                    if start_date is None:
-                        start_date = datetime.now() - timedelta(days=90)
-                    if end_date is None:
-                        end_date = datetime.now()
-                    return self._generate_mock_invoice_data(start_date, end_date)
+                    # Return data from CSV files
+                    logger.info("QuickBooks client not available, reading from CSV files")
+                    csv_path = f"{self.data_dir}/invoice_data.csv"
+                    if os.path.exists(csv_path):
+                        return pd.read_csv(csv_path, parse_dates=['invoice_date', 'due_date'])
+                    else:
+                        # Fallback to mock data if CSV files don't exist
+                        logger.warning("CSV files not found, returning mock data")
+                        return self._generate_mock_invoice_data(start_date, end_date)
             except Exception as e:
                 logger.error(f"Error collecting invoice data: {e}")
-                # Handle None values for start_date and end_date
-                if start_date is None:
-                    start_date = datetime.now() - timedelta(days=90)
-                if end_date is None:
-                    end_date = datetime.now()
+                # Fallback to mock data
                 return self._generate_mock_invoice_data(start_date, end_date)
                 
         except Exception as e:
@@ -111,7 +111,7 @@ class RevenueLeakDataPreparator:
     async def collect_time_log_data(self, start_date: Optional[datetime] = None, 
                                   end_date: Optional[datetime] = None) -> pd.DataFrame:
         """
-        Collect time log data from SuperOps
+        Collect time log data from SuperOps or CSV files
         
         Args:
             start_date: Start date for data collection
@@ -127,14 +127,31 @@ class RevenueLeakDataPreparator:
             
         try:
             # If SuperOps client is available, use it
-            # For now, we'll use mock data since we don't have a specific time logs method
-            logger.warning("SuperOps client available but using mock data for time logs")
-            # Handle None values for start_date and end_date
-            if start_date is None:
-                start_date = datetime.now() - timedelta(days=90)
-            if end_date is None:
-                end_date = datetime.now()
-            return self._generate_mock_time_log_data(start_date, end_date)
+            try:
+                if self.superops_client is not None:
+                    # For now, we'll use mock data since we don't have a specific time logs method
+                    logger.warning("SuperOps client available but using CSV data for time logs")
+                    csv_path = f"{self.data_dir}/time_log_data.csv"
+                    if os.path.exists(csv_path):
+                        return pd.read_csv(csv_path, parse_dates=['start_time', 'end_time'])
+                    else:
+                        # Fallback to mock data if CSV files don't exist
+                        logger.warning("CSV files not found, returning mock data")
+                        return self._generate_mock_time_log_data(start_date, end_date)
+                else:
+                    # Return data from CSV files
+                    logger.info("SuperOps client not available, reading from CSV files")
+                    csv_path = f"{self.data_dir}/time_log_data.csv"
+                    if os.path.exists(csv_path):
+                        return pd.read_csv(csv_path, parse_dates=['start_time', 'end_time'])
+                    else:
+                        # Fallback to mock data if CSV files don't exist
+                        logger.warning("CSV files not found, returning mock data")
+                        return self._generate_mock_time_log_data(start_date, end_date)
+            except Exception as e:
+                logger.error(f"Error collecting time log data: {e}")
+                # Fallback to mock data
+                return self._generate_mock_time_log_data(start_date, end_date)
                 
         except Exception as e:
             logger.error(f"Error collecting time log data: {e}")
@@ -143,7 +160,7 @@ class RevenueLeakDataPreparator:
     async def collect_service_delivery_data(self, start_date: Optional[datetime] = None, 
                                           end_date: Optional[datetime] = None) -> pd.DataFrame:
         """
-        Collect service delivery metrics from SuperOps
+        Collect service delivery metrics from SuperOps or CSV files
         
         Args:
             start_date: Start date for data collection
@@ -169,21 +186,18 @@ class RevenueLeakDataPreparator:
                     service_data = [vars(metric) for metric in metrics]
                     return pd.DataFrame(service_data)
                 else:
-                    # Return mock data for demonstration
-                    logger.warning("SuperOps client not available, returning mock data")
-                    # Handle None values for start_date and end_date
-                    if start_date is None:
-                        start_date = datetime.now() - timedelta(days=90)
-                    if end_date is None:
-                        end_date = datetime.now()
-                    return self._generate_mock_service_data(start_date, end_date)
+                    # Return data from CSV files
+                    logger.info("SuperOps client not available, reading from CSV files")
+                    csv_path = f"{self.data_dir}/service_data.csv"
+                    if os.path.exists(csv_path):
+                        return pd.read_csv(csv_path, parse_dates=['service_date'])
+                    else:
+                        # Fallback to mock data if CSV files don't exist
+                        logger.warning("CSV files not found, returning mock data")
+                        return self._generate_mock_service_data(start_date, end_date)
             except Exception as e:
                 logger.error(f"Error collecting service delivery data: {e}")
-                # Handle None values for start_date and end_date
-                if start_date is None:
-                    start_date = datetime.now() - timedelta(days=90)
-                if end_date is None:
-                    end_date = datetime.now()
+                # Fallback to mock data
                 return self._generate_mock_service_data(start_date, end_date)
                 
         except Exception as e:
