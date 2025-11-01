@@ -1,6 +1,6 @@
 """
-FastAPI Main Application
-Model serving API with comprehensive monitoring and management
+Simple FastAPI Main Application
+Model serving API without MLflow dependency for testing
 """
 
 import logging
@@ -17,7 +17,7 @@ from .middleware.metrics import MetricsMiddleware
 from .middleware.error_handler import ErrorHandlerMiddleware
 from .middleware.auth import AuthMiddleware
 from .middleware.ratelimit import RateLimitMiddleware
-from .dependencies import get_model_registry, get_metrics_collector
+from .simple_dependencies import get_model_registry, get_metrics_collector
 from src.utils.logging_config import setup_logging
 from config import settings
 
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Application lifespan management"""
     # Startup
-    logger.info("Starting SuperHack AI/ML Model Server...")
+    logger.info("Starting SuperHack AI/ML Model Server (Simple Version)...")
     
     # Initialize model registry
     model_registry = get_model_registry()
@@ -46,15 +46,15 @@ async def lifespan(app: FastAPI):
     
     # Shutdown
     logger.info("Shutting down SuperHack AI/ML Model Server...")
-    await model_registry.cleanup()
+    # Note: SimpleModelRegistry doesn't have cleanup method
     await metrics_collector.cleanup()
     logger.info("Model server shutdown completed")
 
 
 # Create FastAPI application
 app = FastAPI(
-    title="SuperHack AI/ML Model Server",
-    description="AI/ML model serving API for MSP profitability optimization and predictive analytics",
+    title="SuperHack AI/ML Model Server (Simple)",
+    description="AI/ML model serving API for MSP profitability optimization and predictive analytics (Simple Version)",
     version="1.0.0",
     docs_url="/docs" if settings.debug else None,
     redoc_url="/redoc" if settings.debug else None,
@@ -100,7 +100,7 @@ app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 async def root():
     """Root endpoint"""
     return {
-        "message": "SuperHack AI/ML Model Server",
+        "message": "SuperHack AI/ML Model Server (Simple Version)",
         "version": "1.0.0",
         "status": "running",
         "docs": "/docs" if settings.debug else "disabled",
@@ -142,7 +142,7 @@ def create_app() -> FastAPI:
 
 if __name__ == "__main__":
     uvicorn.run(
-        "src.api.main:app",
+        "src.api.simple_main:app",
         host=settings.model_server.host,
         port=settings.model_server.port,
         reload=settings.model_server.reload,

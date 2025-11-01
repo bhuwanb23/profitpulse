@@ -42,16 +42,23 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
             f"Correlation ID: {correlation_id}"
         )
         
+        # Include additional error details if available
+        error_content = {
+            "error": "HTTP Error",
+            "message": exc.detail,
+            "status_code": exc.status_code,
+            "correlation_id": correlation_id,
+            "path": request.url.path,
+            "method": request.method
+        }
+        
+        # Add headers if available
+        if hasattr(exc, 'headers') and exc.headers:
+            error_content["headers"] = exc.headers
+        
         return JSONResponse(
             status_code=exc.status_code,
-            content={
-                "error": "HTTP Error",
-                "message": exc.detail,
-                "status_code": exc.status_code,
-                "correlation_id": correlation_id,
-                "path": request.url.path,
-                "method": request.method
-            }
+            content=error_content
         )
     
     def _handle_unexpected_exception(self, request: Request, exc: Exception) -> JSONResponse:
@@ -67,8 +74,8 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
         
         # Prepare error response
         error_response = {
-            "error": "Internal Server Error",
-            "message": "An unexpected error occurred",
+            "error": type(exc).__name__,
+            "message": str(exc),
             "status_code": 500,
             "correlation_id": correlation_id,
             "path": request.url.path,
@@ -78,6 +85,15 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
         # Include traceback in development mode
         if self.include_traceback:
             error_response["traceback"] = traceback.format_exc()
+        
+        # Add request details for debugging
+        try:
+            error_response["request_details"] = {
+                "query_params": dict(request.query_params),
+                "headers": dict(request.headers)
+            }
+        except Exception:
+            pass  # Ignore if we can't serialize request details
         
         return JSONResponse(
             status_code=500,

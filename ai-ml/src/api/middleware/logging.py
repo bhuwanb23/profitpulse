@@ -10,6 +10,8 @@ from typing import Callable
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from config import settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -59,11 +61,25 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         client_ip = request.client.host if request.client else "unknown"
         user_agent = request.headers.get("user-agent", "unknown")
         
+        # Get user info if available
+        user_info = getattr(request.state, "user", None)
+        user_name = user_info.get("name", "anonymous") if user_info else "anonymous"
+        
+        # Log basic request info
         logger.info(
             f"Request started - {request.method} {request.url.path} - "
             f"Client IP: {client_ip} - User-Agent: {user_agent} - "
-            f"Correlation ID: {correlation_id}"
+            f"User: {user_name} - Correlation ID: {correlation_id}"
         )
+        
+        # Log request body for POST/PUT requests (in debug mode only)
+        if hasattr(settings, 'debug') and settings.debug and request.method in ["POST", "PUT", "PATCH"]:
+            try:
+                body = await request.body()
+                if body:
+                    logger.debug(f"Request body: {body.decode('utf-8')[:500]}...")
+            except Exception:
+                pass  # Ignore if we can't read the body
     
     async def _log_response(self, request: Request, response: Response, 
                           processing_time: float, correlation_id: str):
