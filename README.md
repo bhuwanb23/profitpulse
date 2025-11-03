@@ -1,12 +1,29 @@
-# 🚀 SuperHack - AI-Powered Profitability & Growth Intelligence Platform
+# 🚀 SuperHack AI - AI-Powered Profitability & Growth Intelligence Platform
 
 > **Transform your MSP operations into strategic growth with AI-driven financial insights**
 
 ## 🎯 Overview
 
-SuperHack is an AI-powered platform designed to help Managed Service Providers (MSPs) and IT teams convert operational data into actionable financial insights. It integrates with SuperOps and other IT management tools to provide real-time profitability analysis, revenue leak detection, and growth recommendations.
+SuperHack AI is an AI-powered platform designed to help Managed Service Providers (MSPs) and IT teams convert operational data into actionable financial insights. It integrates with SuperOps and other IT management tools to provide real-time profitability analysis, revenue leak detection, and growth recommendations.
 
-## ✨ Key Features
+## 📊 Business Impact Analysis
+
+![Business Impact](images/readme/business_impact.png)
+
+## 🔍 Pain Points & Root Causes
+
+![Pain Points](images/readme/pain_points.png)
+![Root Causes](images/readme/causes.png)
+
+## 💡 Innovative Solutions
+
+![Innovation](images/readme/innovation.png)
+
+## 📈 Expected Impact
+
+![Expected Impact](images/readme/expected_impact.png)
+
+## 🎯 Key Features
 
 - 🧠 **AI-Powered Analytics** - Machine learning models for profitability analysis
 - 💰 **Revenue Leak Detection** - Identify unbilled services and underpriced contracts
@@ -14,6 +31,12 @@ SuperHack is an AI-powered platform designed to help Managed Service Providers (
 - 🔗 **Seamless Integrations** - SuperOps, QuickBooks, Zapier support
 - 🎯 **Smart Recommendations** - AI-driven growth and optimization suggestions
 - 📈 **Profit Forecasting** - Predictive analytics for future performance
+
+![Core Features](images/readme/core_features.png)
+
+## 🔍 SWOT Analysis
+
+![SWOT Analysis](images/readme/swot.png)
 
 ## 🏗️ Architecture
 
@@ -32,93 +55,14 @@ SuperHack is an AI-powered platform designed to help Managed Service Providers (
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Node.js 18+ 
-- Python 3.9+
-- PostgreSQL 13+
-- Git
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd superhack
-   ```
-
-2. **Set up the database**
-   ```powershell
-   # Windows PowerShell
-   .\scripts\setup\database_setup.ps1
-   ```
-
-3. **Install dependencies**
-   ```bash
-   # Backend
-   cd backend
-   npm install
-   
-   # Frontend
-   cd ../frontend
-   npm install
-   
-   # AI/ML
-   cd ../ai-ml
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt
-   ```
-
-4. **Configure environment**
-   ```bash
-   cp env.example .env
-   # Edit .env with your configuration
-   ```
-
-5. **Start the services**
-   ```bash
-   # Terminal 1 - Backend
-   cd backend
-   npm start
-   
-   # Terminal 2 - Frontend
-   cd frontend
-   npm run dev
-   
-   # Terminal 3 - AI/ML Service
-   cd ai-ml
-   python app.py
-   ```
-
-6. **Access the application**
-   - Frontend: http://localhost:5173
-   - Backend API: http://localhost:3000
-   - AI/ML Service: http://localhost:5000
-
-## 🐳 Docker Setup (Alternative)
-
-```bash
-# Start all services with Docker
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop services
-docker-compose down
-```
-
 ## 📁 Project Structure
 
 ```
-superhack/
+SuperHack/
 ├── backend/                 # Node.js/Express API
 │   ├── src/
 │   │   ├── controllers/     # API route handlers
-│   │   ├── models/         # Database models
+│   │   ├── models/          # Database models
 │   │   ├── routes/          # API routes
 │   │   ├── services/        # Business logic
 │   │   └── integrations/    # External API integrations
@@ -141,6 +85,105 @@ superhack/
 │   └── seeds/              # Sample data
 └── docs/                   # Documentation
 ```
+
+## 📈 Scalability & Feasibility
+
+![Scalability](images/readme/scalability.png)
+![Feasibility](images/readme/feasibility.png)
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 18+
+- Python 3.9+
+- PostgreSQL 13+
+- Git
+
+### Installation Options
+
+#### Option 1: Docker Setup (Recommended)
+
+```bash
+# Start all services with Docker
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
+
+#### Option 2: Manual Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd superhack
+   ```
+
+2. **Set up the database**
+   ```powershell
+   # Windows PowerShell
+   .\scripts\setup\database_setup.ps1
+   ```
+
+3. **Install dependencies for each service**
+
+   **Backend (Node.js)**
+   ```bash
+   cd backend
+   npm install
+   ```
+
+   **Frontend (React)**
+   ```bash
+   cd ../frontend
+   npm install
+   ```
+
+   **AI/ML Service (Python)**
+   ```bash
+   cd ../ai-ml
+   python -m venv venv
+   # On Windows:
+   venv\Scripts\activate
+   # On macOS/Linux:
+   # source venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+4. **Configure environment**
+   ```bash
+   cp env.example .env
+   # Edit .env with your configuration
+   ```
+
+5. **Start the services**
+
+   **Backend API**
+   ```bash
+   cd backend
+   npm start
+   ```
+
+   **Frontend**
+   ```bash
+   cd frontend
+   npm run dev
+   ```
+
+   **AI/ML Service**
+   ```bash
+   cd ai-ml
+   python src/api/main.py
+   ```
+
+6. **Access the application**
+   - Frontend: http://localhost:5173
+   - Backend API: http://localhost:3000
+   - AI/ML Service: http://localhost:5000
 
 ## 🔧 Configuration
 
@@ -166,82 +209,6 @@ AI_CONFIDENCE_THRESHOLD=0.7
 AI_MODEL_PATH=./ai-ml/models
 ```
 
-### Database Schema
-
-The platform uses PostgreSQL with the following key entities:
-
-- **Organizations** - MSP companies
-- **Clients** - MSP customers
-- **Services** - IT services offered
-- **Tickets** - Support tickets
-- **Invoices** - Billing records
-- **Budgets** - Financial planning
-- **AI Analytics** - ML analysis results
-- **AI Recommendations** - AI suggestions
-
-## 🧠 AI Features
-
-### Profitability Analysis
-- Client profitability scoring
-- Revenue vs. cost analysis
-- Margin optimization suggestions
-
-### Revenue Leak Detection
-- Unbilled service identification
-- Underpriced contract detection
-- Billing error alerts
-
-### Smart Recommendations
-- Pricing optimization
-- Service bundling suggestions
-- Budget reallocation advice
-
-### Predictive Analytics
-- Revenue forecasting
-- Client churn prediction
-- Growth opportunity identification
-
-## 🔌 Integrations
-
-### SuperOps Integration
-- Ticket and task synchronization
-- Client and service data import
-- Real-time operational metrics
-
-### QuickBooks Integration
-- Invoice and payment synchronization
-- Financial data import
-- Automated reporting
-
-### Zapier Integration
-- Workflow automation
-- Third-party app connections
-- Custom integrations
-
-## 📊 API Documentation
-
-### Authentication
-```bash
-POST /api/auth/login
-{
-  "email": "user@example.com",
-  "password": "password"
-}
-```
-
-### Analytics
-```bash
-GET /api/analytics/profitability?clientId=uuid
-GET /api/analytics/revenue-leaks
-GET /api/analytics/recommendations
-```
-
-### AI Insights
-```bash
-GET /api/ai/analysis?type=profitability
-POST /api/ai/recommendations/apply
-```
-
 ## 🧪 Testing
 
 ```bash
@@ -257,6 +224,14 @@ npm test
 cd ai-ml
 python -m pytest tests/
 ```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
 
 ## 🚀 Deployment
 
@@ -286,32 +261,13 @@ python -m pytest tests/
    cd ai-ml && pip install -r requirements.txt
    ```
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
-
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
 
 ## 🆘 Support
 
 - 📧 Email: support@superhack.ai
-- 📚 Documentation: [docs.superhack.ai](https://docs.superhack.ai)
 - 🐛 Issues: [GitHub Issues](https://github.com/superhack/issues)
 
-## 🎯 Roadmap
-
-- [ ] Advanced ML models
-- [ ] Mobile app
-- [ ] White-label solution
-- [ ] API marketplace
-- [ ] Multi-tenant architecture
-
 ---
-
-**Built with ❤️ for the MSP community**
