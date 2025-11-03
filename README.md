@@ -1,10 +1,10 @@
-# 🚀 SuperHack AI - AI-Powered Profitability & Growth Intelligence Platform
+# 🚀 ProfitPulse AI - AI-Powered Profitability & Growth Intelligence Platform
 
 > **Transform your MSP operations into strategic growth with AI-driven financial insights**
 
 ## 🎯 Overview
 
-SuperHack AI is an AI-powered platform designed to help Managed Service Providers (MSPs) and IT teams convert operational data into actionable financial insights. It integrates with SuperOps and other IT management tools to provide real-time profitability analysis, revenue leak detection, and growth recommendations.
+ProfitPulse AI is an AI-powered platform designed to help Managed Service Providers (MSPs) and IT teams convert operational data into actionable financial insights. It integrates with SuperOps and other IT management tools to provide real-time profitability analysis, revenue leak detection, and growth recommendations.
 
 ## 📊 Business Impact Analysis
 
@@ -58,7 +58,7 @@ SuperHack AI is an AI-powered platform designed to help Managed Service Provider
 ## 📁 Project Structure
 
 ```
-SuperHack/
+ProfitPulse/
 ├── backend/                 # Node.js/Express API
 │   ├── src/
 │   │   ├── controllers/     # API route handlers
@@ -120,7 +120,7 @@ docker-compose down
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd superhack
+   cd ProfitPulse
    ```
 
 2. **Set up the database**
@@ -195,9 +195,9 @@ Key configuration options in `.env`:
 # Database
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=superhack_db
-DB_USER=superhack_user
-DB_PASSWORD=superhack_password
+DB_NAME=ProfitPulse_db
+DB_USER=ProfitPulse_user
+DB_PASSWORD=ProfitPulse_password
 
 # API Keys
 SUPEROPS_API_KEY=your_superops_api_key
@@ -267,7 +267,7 @@ This project is licensed under the MIT License.
 
 ## 🆘 Support
 
-- 📧 Email: support@superhack.ai
-- 🐛 Issues: [GitHub Issues](https://github.com/superhack/issues)
+- 📧 Email: support@ProfitPulse.ai
+- 🐛 Issues: [GitHub Issues](https://github.com/ProfitPulse/issues)
 
 ---
