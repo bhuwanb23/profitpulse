@@ -11,7 +11,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
 
-from .routes import health, models, predictions, monitoring, admin, profitability, churn, revenue_leak, pricing, budget, demand, anomaly
+from .routes import health, models, predictions, monitoring, admin, profitability, churn, revenue_leak, pricing, budget, demand, anomaly, scheduled, historical, retraining, reporting
 from .middleware.logging import LoggingMiddleware
 from .middleware.metrics import MetricsMiddleware
 from .middleware.error_handler import ErrorHandlerMiddleware
@@ -94,6 +94,10 @@ app.include_router(demand.router, prefix="/api/demand", tags=["Demand"])
 app.include_router(anomaly.router, prefix="/api/anomaly", tags=["Anomaly"])
 app.include_router(monitoring.router, prefix="/api/monitoring", tags=["Monitoring"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
+app.include_router(scheduled.router, prefix="/api/scheduled", tags=["Scheduled Runs"])
+app.include_router(historical.router, prefix="/api/historical", tags=["Historical Analysis"])
+app.include_router(retraining.router, prefix="/api/retraining", tags=["Model Retraining"])
+app.include_router(reporting.router, prefix="/api/reporting", tags=["Performance Reporting"])
 
 
 @app.get("/")
@@ -116,7 +120,11 @@ async def root():
             "demand": "/api/demand",
             "anomaly": "/api/anomaly",
             "monitoring": "/api/monitoring",
-            "admin": "/api/admin"
+            "admin": "/api/admin",
+            "scheduled": "/api/scheduled",
+            "historical": "/api/historical",
+            "retraining": "/api/retraining",
+            "reporting": "/api/reporting"
         }
     }
 
