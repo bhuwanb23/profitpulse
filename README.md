@@ -6,32 +6,6 @@
   <img src="images/readme/core_features.png" alt="Core Features" width="800"/>
 </p>
 
-## 📑 Table of Contents
-
-- [🎯 Overview](#-overview)
-- [📊 Business Impact Analysis](#-business-impact-analysis)
-- [🔍 Pain Points & Root Causes](#-pain-points--root-causes)
-- [💡 Innovative Solutions](#-innovative-solutions)
-- [📈 Expected Impact](#-expected-impact)
-- [✨ Key Features](#-key-features)
-- [🔍 SWOT Analysis](#-swot-analysis)
-- [🏗️ System Architecture](#️-system-architecture)
-  - [🌐 High-Level Architecture](#-high-level-architecture)
-  - [📦 Container Architecture](#-container-architecture)
-  - [💾 Data Model](#-data-model)
-  - [🔌 API Architecture](#-api-architecture)
-  - [🧠 AI/ML Model Architecture](#-aiml-model-architecture)
-- [📁 Project Structure](#-project-structure)
-- [📈 Scalability & Feasibility](#-scalability--feasibility)
-- [🚀 Quick Start](#-quick-start)
-  - [📋 Prerequisites](#-prerequisites)
-  - [📥 Installation Options](#-installation-options)
-- [🔧 Configuration](#-configuration)
-- [🧪 Testing](#-testing)
-- [🤝 Contributing](#-contributing)
-- [🚀 Deployment](#-deployment)
-- [📄 License](#-license)
-- [🆘 Support](#-support)
 
 ## 🎯 Overview
 
