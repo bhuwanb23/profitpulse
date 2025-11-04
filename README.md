@@ -2,9 +2,47 @@
 
 > **Transform your MSP operations into strategic growth with AI-driven financial insights**
 
+<p align="center">
+  <img src="images/readme/core_features.png" alt="Core Features" width="800"/>
+</p>
+
+## 📑 Table of Contents
+
+- [🎯 Overview](#-overview)
+- [📊 Business Impact Analysis](#-business-impact-analysis)
+- [🔍 Pain Points & Root Causes](#-pain-points--root-causes)
+- [💡 Innovative Solutions](#-innovative-solutions)
+- [📈 Expected Impact](#-expected-impact)
+- [✨ Key Features](#-key-features)
+- [🔍 SWOT Analysis](#-swot-analysis)
+- [🏗️ System Architecture](#️-system-architecture)
+  - [🌐 High-Level Architecture](#-high-level-architecture)
+  - [📦 Container Architecture](#-container-architecture)
+  - [💾 Data Model](#-data-model)
+  - [🔌 API Architecture](#-api-architecture)
+  - [🧠 AI/ML Model Architecture](#-aiml-model-architecture)
+- [📁 Project Structure](#-project-structure)
+- [📈 Scalability & Feasibility](#-scalability--feasibility)
+- [🚀 Quick Start](#-quick-start)
+  - [📋 Prerequisites](#-prerequisites)
+  - [📥 Installation Options](#-installation-options)
+- [🔧 Configuration](#-configuration)
+- [🧪 Testing](#-testing)
+- [🤝 Contributing](#-contributing)
+- [🚀 Deployment](#-deployment)
+- [📄 License](#-license)
+- [🆘 Support](#-support)
+
 ## 🎯 Overview
 
 ProfitPulse AI is an AI-powered platform designed to help Managed Service Providers (MSPs) and IT teams convert operational data into actionable financial insights. It integrates with SuperOps and other IT management tools to provide real-time profitability analysis, revenue leak detection, and growth recommendations.
+
+### 🎯 Key Value Propositions
+
+- **Financial Intelligence**: Transform operational data into financial insights
+- **AI-Powered Predictions**: Leverage machine learning for accurate forecasting
+- **Real-time Monitoring**: Continuous analysis of business performance
+- **Actionable Recommendations**: Data-driven suggestions for growth optimization
 
 ## 📊 Business Impact Analysis
 
@@ -23,7 +61,7 @@ ProfitPulse AI is an AI-powered platform designed to help Managed Service Provid
 
 ![Expected Impact](images/readme/expected_impact.png)
 
-## 🎯 Key Features
+## ✨ Key Features
 
 - 🧠 **AI-Powered Analytics** - Machine learning models for profitability analysis
 - 💰 **Revenue Leak Detection** - Identify unbilled services and underpriced contracts
@@ -32,27 +70,122 @@ ProfitPulse AI is an AI-powered platform designed to help Managed Service Provid
 - 🎯 **Smart Recommendations** - AI-driven growth and optimization suggestions
 - 📈 **Profit Forecasting** - Predictive analytics for future performance
 
-![Core Features](images/readme/core_features.png)
-
 ## 🔍 SWOT Analysis
 
 ![SWOT Analysis](images/readme/swot.png)
 
-## 🏗️ Architecture
+## 🏗️ System Architecture
 
+### 🌐 High-Level Architecture
+
+```mermaid
+graph TD
+    A[Frontend - React] <-- HTTP/REST --> B[Backend - Node.js]
+    B <-- HTTP/REST --> C[AI/ML Service - Python]
+    B <--> D[(PostgreSQL Database)]
+    B <--> E[(Redis Cache)]
+    C <--> D
+    C <--> F[Model Storage]
+    G[SuperOps API] --> B
+    H[QuickBooks API] --> B
+    I[Zapier Integrations] --> B
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │    │   Backend       │    │   AI/ML Layer   │
-│   (React)       │◄──►│   (Node.js)     │◄──►│   (Python)      │
-│   Dashboard     │    │   API Server    │    │   Analytics     │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   PostgreSQL    │    │   Redis Cache   │    │   File Storage  │
-│   Database      │    │   Sessions      │    │   Models/Data   │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+
+### 📦 Container Architecture
+
+```mermaid
+graph LR
+    subgraph "Docker Network"
+        direction TB
+        F[Frontend<br/>React/Vite<br/>Port: 5173] <--> B[Backend<br/>Node.js/Express<br/>Port: 3000]
+        B <--> A[AI/ML Service<br/>Python/FastAPI<br/>Port: 5000]
+        B <--> C[PostgreSQL<br/>Port: 5432]
+        B <--> D[Redis<br/>Port: 6379]
+        A <--> C
+    end
+```
+
+### 💾 Data Model
+
+```mermaid
+erDiagram
+    ORGANIZATIONS ||--o{ USERS : "has"
+    ORGANIZATIONS ||--o{ CLIENTS : "manages"
+    ORGANIZATIONS ||--o{ SERVICES : "offers"
+    ORGANIZATIONS ||--o{ BUDGETS : "plans"
+    CLIENTS ||--o{ CLIENT_SERVICES : "subscribes"
+    CLIENTS ||--o{ TICKETS : "creates"
+    CLIENTS ||--o{ INVOICES : "receives"
+    SERVICES ||--o{ CLIENT_SERVICES : "provided"
+    INVOICES ||--o{ INVOICE_ITEMS : "contains"
+    TICKETS ||--o{ INVOICE_ITEMS : "billed"
+    SERVICES ||--o{ INVOICE_ITEMS : "billed"
+    BUDGETS ||--o{ BUDGET_CATEGORIES : "divided"
+    BUDGETS ||--o{ EXPENSES : "tracks"
+    BUDGET_CATEGORIES ||--o{ EXPENSES : "categorized"
+    ORGANIZATIONS ||--o{ AI_ANALYTICS : "analyzes"
+    ORGANIZATIONS ||--o{ AI_RECOMMENDATIONS : "suggests"
+    ORGANIZATIONS ||--o{ INTEGRATION_SETTINGS : "connects"
+```
+
+### 🔌 API Architecture
+
+#### Backend API Endpoints (Node.js)
+
+```mermaid
+graph LR
+    A[API Gateway] --> B[Authentication]
+    A --> C[User Management]
+    A --> D[Organization Management]
+    A --> E[Client Management]
+    A --> F[Service Management]
+    A --> G[Ticket Operations]
+    A --> H[Ticket Analytics]
+    A --> I[Invoice Management]
+    A --> J[Budget Management]
+    A --> K[Analytics]
+    A --> L[Billing Analytics]
+    A --> M[AI Services]
+    A --> N[Integrations]
+    A --> O[Reports]
+    A --> P[Notifications]
+```
+
+#### AI/ML API Endpoints (Python)
+
+```mermaid
+graph LR
+    A[AI/ML API] --> B[Health Checks]
+    A --> C[Model Management]
+    A --> D[Predictions]
+    A --> E[Profitability Analysis]
+    A --> F[Churn Prediction]
+    A --> G[Revenue Leak Detection]
+    A --> H[Pricing Optimization]
+    A --> I[Budget Optimization]
+    A --> J[Demand Forecasting]
+    A --> K[Anomaly Detection]
+    A --> L[Monitoring]
+    A --> M[Admin]
+    A --> N[Scheduled Runs]
+    A --> O[Historical Analysis]
+    A --> P[Model Retraining]
+    A --> Q[Performance Reporting]
+```
+
+### 🧠 AI/ML Model Architecture
+
+```mermaid
+graph TD
+    A[Data Ingestion] --> B[Data Preprocessing]
+    B --> C[Feature Engineering]
+    C --> D[Model Training]
+    D --> E[Model Validation]
+    E --> F[Model Deployment]
+    F --> G[Real-time Predictions]
+    G --> H[Performance Monitoring]
+    H --> I[Model Retraining]
+    I --> D
 ```
 
 ## 📁 Project Structure
@@ -93,14 +226,15 @@ ProfitPulse/
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### 📋 Prerequisites
 
 - Node.js 18+
 - Python 3.9+
 - PostgreSQL 13+
 - Git
+- Docker (optional, for containerized deployment)
 
-### Installation Options
+### 📥 Installation Options
 
 #### Option 1: Docker Setup (Recommended)
 
