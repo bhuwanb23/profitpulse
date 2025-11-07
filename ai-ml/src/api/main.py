@@ -4,6 +4,8 @@ Model serving API with comprehensive monitoring and management
 """
 
 import logging
+import sys
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,13 +13,17 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
 
-from .routes import health, models, predictions, monitoring, admin, profitability, churn, revenue_leak, pricing, budget, demand, anomaly, scheduled, historical, retraining, reporting
-from .middleware.logging import LoggingMiddleware
-from .middleware.metrics import MetricsMiddleware
-from .middleware.error_handler import ErrorHandlerMiddleware
-from .middleware.auth import AuthMiddleware
-from .middleware.ratelimit import RateLimitMiddleware
-from .dependencies import get_model_registry, get_metrics_collector
+# Add the project root to the Python path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+# Use absolute imports instead of relative imports
+from src.api.routes import health, models, predictions, monitoring, admin, profitability, churn, revenue_leak, pricing, budget, demand, anomaly, scheduled, historical, retraining, reporting
+from src.api.middleware.logging import LoggingMiddleware
+from src.api.middleware.metrics import MetricsMiddleware
+from src.api.middleware.error_handler import ErrorHandlerMiddleware
+from src.api.middleware.auth import AuthMiddleware
+from src.api.middleware.ratelimit import RateLimitMiddleware
+from src.api.dependencies import get_model_registry, get_metrics_collector
 from src.utils.logging_config import setup_logging
 from config import settings
 
