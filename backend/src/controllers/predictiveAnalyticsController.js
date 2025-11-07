@@ -1,6 +1,11 @@
 const { AIAnalytics, AIRecommendation, Organization, Client, Invoice, Ticket, Service, Budget, Expense } = require('../models')
 const { Op } = require('sequelize')
 const { validationResult } = require('express-validator')
+const aiClient = require('../services/ai-ml')
+const ChurnMapper = require('../services/ai-ml/mappers/churnMapper')
+const BudgetMapper = require('../services/ai-ml/mappers/budgetMapper')
+const DemandMapper = require('../services/ai-ml/mappers/demandMapper')
+const winston = require('winston')
 
 // GET /api/ai/predictions/revenue - Revenue forecasting
 const getRevenueForecasting = async (req, res) => {
@@ -187,7 +192,7 @@ const getChurnPrediction = async (req, res) => {
       ]
     })
 
-    // Analyze churn risk for each client
+    // Analyze churn risk for each client using AI/ML
     const churnPredictions = []
     
     for (const client of clients) {
@@ -195,7 +200,156 @@ const getChurnPrediction = async (req, res) => {
       const tickets = client.tickets || []
       const services = client.services || []
 
-      // Calculate churn risk factors
+      try {
+        // Prepare client data for AI/ML analysis
+        const clientData = prepareChurnClientData(client, invoices, tickets, services)
+        
+        // Validate data quality
+        const validation = ChurnMapper.validateBackendData(clientData)
+        if (!validation.isValid) {
+          winston.warn('Client churn data validation failed, using fallback analysis', {
+            clientId: client.id,
+            errors: validation.errors
+          })
+          
+          // Fall back to original analysis
+          const fallbackResult = performFallbackChurnAnalysis(client, invoices, tickets, services, riskFactors, churnRiskScore)
+          churnPredictions.push(fallbackResult)
+          continue
+        }
+
+        // Try AI/ML service prediction
+        let aiPredictionResult = null
+        try {
+          // Map to AI/ML format
+          const aimlRequest = ChurnMapper.mapBackendToAIML(clientData, {
+            predictionHorizon: prediction_horizon,
+            includeConfidence: true,
+            includeRiskFactors: include_factors === 'true',
+            includeRetentionStrategies: true
+          })
+
+          // Call AI/ML service with fallback enabled
+          const aimlResponse = await aiClient.predictChurn(aimlRequest, {
+            useCircuitBreaker: true,
+            useFallback: true,
+            cacheKey: ChurnMapper.createCacheKey(clientData),
+            cacheTTL: 300000 // 5 minutes
+          })
+
+          // Validate AI/ML response
+          const responseValidation = ChurnMapper.validateAIMLResponse(aimlResponse)
+          if (responseValidation.isValid) {
+            // Map AI/ML response to backend format
+            aiPredictionResult = ChurnMapper.mapAIMLToBackend(aimlResponse)
+            
+            winston.info('AI/ML churn prediction successful', {
+              clientId: client.id,
+              churnProbability: aiPredictionResult.churnPrediction.churnProbability,
+              riskLevel: aiPredictionResult.churnPrediction.riskLevel,
+              confidence: aiPredictionResult.churnPrediction.confidence,
+              isFallback: aiPredictionResult.metadata.isFallback
+            })
+          } else {
+            winston.warn('AI/ML churn response validation failed, using fallback', {
+              clientId: client.id,
+              errors: responseValidation.errors
+            })
+          }
+
+        } catch (aiError) {
+          winston.error('AI/ML churn prediction failed, using fallback', {
+            clientId: client.id,
+            error: aiError.message
+          })
+        }
+
+        // Use AI prediction if available, otherwise fall back to original analysis
+        if (aiPredictionResult && !aiPredictionResult.metadata.isFallback) {
+          // Convert AI prediction to expected format
+          const churnResult = convertAIChurnPrediction(aiPredictionResult, client)
+          churnPredictions.push(churnResult)
+        } else {
+          // Fall back to original analysis
+          const fallbackResult = performFallbackChurnAnalysis(client, invoices, tickets, services)
+          churnPredictions.push(fallbackResult)
+        }
+
+      } catch (error) {
+        winston.error('Error in churn analysis, using basic fallback', {
+          clientId: client.id,
+          error: error.message
+        })
+        
+        // Basic fallback
+        const basicResult = performFallbackChurnAnalysis(client, invoices, tickets, services)
+        churnPredictions.push(basicResult)
+      }
+    }
+
+    // Helper function to prepare client data for AI analysis
+    function prepareChurnClientData(client, invoices, tickets, services) {
+      const overdueInvoices = invoices.filter(inv => 
+        inv.status !== 'paid' && new Date(inv.due_date) < new Date()
+      )
+      const recentTickets = tickets.filter(ticket => 
+        new Date(ticket.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+      )
+      const unresolvedTickets = tickets.filter(ticket => 
+        !['resolved', 'closed'].includes(ticket.status)
+      )
+
+      return {
+        id: client.id,
+        engagementScore: Math.max(0, 1 - (recentTickets.length / 10)),
+        communicationFrequency: Math.max(0, 1 - (unresolvedTickets.length / 5)),
+        ticketCount: tickets.length,
+        responseTimeSatisfaction: 0.8, // Default
+        featureAdoptionRate: services.length > 0 ? services.filter(s => s.status === 'active').length / services.length : 0.5,
+        loginFrequency: 0.6, // Default
+        paymentHistory: overdueInvoices.length === 0 ? 'good' : overdueInvoices.length < 3 ? 'fair' : 'poor',
+        paymentDelays: overdueInvoices.length,
+        contractValue: invoices.reduce((sum, inv) => sum + parseFloat(inv.total_amount || 0), 0),
+        priceSensitivity: 0.5, // Default
+        billingDisputes: 0, // Default
+        revenueTrend: 'stable', // Default
+        serviceUtilization: services.length > 0 ? services.filter(s => s.status === 'active').length / services.length : 0.7,
+        downtimeIncidents: 0, // Default
+        slaCompliance: 0.95, // Default
+        resolutionSatisfaction: 0.8, // Default
+        escalationRate: unresolvedTickets.length / Math.max(tickets.length, 1),
+        serviceAdoption: services.length > 0 ? services.filter(s => s.status === 'active').length / services.length : 0.7,
+        relationshipDuration: client.created_at ? 
+          Math.floor((Date.now() - new Date(client.created_at)) / (1000 * 60 * 60 * 24 * 30)) : 12,
+        keyContactStability: 0.8, // Default
+        stakeholderSatisfaction: 0.8, // Default
+        renewalHistory: [], // Default
+        expansionOpportunities: 0.5, // Default
+        competitivePressure: 0.3 // Default
+      }
+    }
+
+    // Helper function to convert AI prediction to expected format
+    function convertAIChurnPrediction(aiResult, client) {
+      return {
+        client_id: client.id,
+        client_name: client.name,
+        client_company: client.company,
+        organization_name: client.organization ? client.organization.name : 'Unknown',
+        churn_probability: aiResult.churnPrediction.churnProbability,
+        risk_level: aiResult.churnPrediction.riskLevel,
+        confidence_score: aiResult.churnPrediction.confidence,
+        time_to_churn: aiResult.churnPrediction.timeToChurn,
+        risk_factors: aiResult.riskFactors,
+        retention_strategies: aiResult.retentionStrategies,
+        early_warning_indicators: aiResult.earlyWarningIndicators,
+        interventions: aiResult.interventions,
+        ai_powered: true
+      }
+    }
+
+    // Helper function for fallback churn analysis
+    function performFallbackChurnAnalysis(client, invoices, tickets, services) {
       const riskFactors = []
       let churnRiskScore = 0
 
