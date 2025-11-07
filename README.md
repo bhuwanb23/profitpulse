@@ -16,7 +16,6 @@
 
 ## 🧩 Table of Contents
 
-- [📖 About the Project](#-about-the-project)
 - [🔍 Problem Statement](#-problem-statement)
 - [💡 Proposed Solution](#-proposed-solution)
 - [✨ Key Features](#-key-features)
@@ -36,33 +35,6 @@
 
 ---
 
-## 📖 About the Project
-
-**ProfitPulse** is an advanced AI-driven financial intelligence platform specifically designed for Managed Service Providers (MSPs) and IT teams. Our platform transforms complex operational data into actionable financial insights, enabling smarter business decisions and sustainable growth.
-
-### 🌟 Vision Statement
-*Empowering MSPs to achieve unprecedented profitability through intelligent automation and data-driven decision making.*
-
-### 🎯 Mission
-To provide MSPs with the most comprehensive AI-driven financial intelligence platform that transforms complex operational data into clear, actionable insights for sustainable business growth.
-
-### 🎯 Core Value Propositions
-
-🧠 **AI-Powered Intelligence**  
-Advanced machine learning algorithms analyze your business patterns to provide accurate predictions and recommendations
-
-💰 **Revenue Optimization**  
-Identify hidden revenue opportunities and eliminate profit leaks through intelligent analysis
-
-📊 **Real-time Insights**  
-Continuous monitoring and analysis of business performance with instant alerts and recommendations
-
-🔗 **Seamless Integration**  
-Native integration with SuperOps, QuickBooks, and other essential MSP tools
-
-🎯 **Strategic Growth**  
-Data-driven recommendations for pricing optimization, client retention, and business expansion
-
 ## 🔍 Problem Statement
 
 ![Pain Points](images/readme/pain_points.png)
@@ -77,6 +49,14 @@ MSPs face critical challenges in financial visibility and operational efficiency
 - **Operational Blind Spots**: Limited visibility into service delivery performance
 
 ## 💡 Proposed Solution
+
+**ProfitPulse** is an advanced AI-driven financial intelligence platform specifically designed for Managed Service Providers (MSPs) and IT teams. Our platform transforms complex operational data into actionable financial insights, enabling smarter business decisions and sustainable growth.
+
+### 🌟 Vision Statement
+*Empowering MSPs to achieve unprecedented profitability through intelligent automation and data-driven decision making.*
+
+### 🎯 Mission
+To provide MSPs with the most comprehensive AI-driven financial intelligence platform that transforms complex operational data into clear, actionable insights for sustainable business growth.
 
 ![Innovation](images/readme/innovation.png)
 
@@ -979,23 +959,81 @@ Our comprehensive platform includes:
 
 <div align="center">
 
-| Role | Name | Expertise |
-|------|------|-----------|
-| **Project Lead** | [Your Name] | Full-Stack Development, AI/ML |
-| **AI/ML Engineer** | [Team Member] | Machine Learning, Data Science |
-| **Frontend Developer** | [Team Member] | React, UI/UX Design |
-| **Backend Developer** | [Team Member] | Node.js, Database Design |
-| **DevOps Engineer** | [Team Member] | Cloud Infrastructure, CI/CD |
+<table style="border: none;">
+<tr>
+<td align="center" style="border: none; padding: 20px;">
+
+<img src="https://github.com/bhuwanb23.png" width="120" height="120" style="border-radius: 50%; border: 4px solid #0066cc;">
+
+### **Bhuwan B**
+**🚀 Project Lead & Full-Stack Developer**
+
+</td>
+<td align="center" style="border: none; padding: 20px;">
+
+<img src="https://github.com/Arun681343.png" width="120" height="120" style="border-radius: 50%; border: 4px solid #28a745;">
+
+### **Arun K**
+**🧠 AI/ML Engineer & Backend Developer**
+
+
+</td>
+</tr>
+</table>
+
+---
+
+<div align="center">
+<h4>🌟 We are a dedicated team of <strong>2 developers</strong> passionate about revolutionizing MSP financial intelligence through AI. 🌟</h4>
+</div>
 
 </div>
 
 ### 🤝 How to Contribute
 
+We welcome contributions from the community! Here's how you can help:
+
+#### 🚀 Getting Started
+
 1. **Fork the repository**
-2. **Create a feature branch** (`git checkout -b feature/amazing-feature`)
-3. **Commit your changes** (`git commit -m 'Add amazing feature'`)
-4. **Push to the branch** (`git push origin feature/amazing-feature`)
-5. **Open a Pull Request**
+   ```bash
+   # Click the "Fork" button on GitHub or use GitHub CLI
+   gh repo fork ProfitPulse/profitpulse
+   ```
+
+2. **Clone your fork**
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/profitpulse.git
+   cd profitpulse
+   ```
+
+3. **Create a feature branch**
+   ```bash
+   git checkout -b feature/amazing-feature
+   ```
+
+4. **Make your changes**
+   ```bash
+   # Make your improvements
+   # Add tests for new features
+   # Update documentation if needed
+   ```
+
+5. **Commit your changes**
+   ```bash
+   git add .
+   git commit -m "✨ Add amazing feature"
+   ```
+
+6. **Push to your branch**
+   ```bash
+   git push origin feature/amazing-feature
+   ```
+
+7. **Open a Pull Request**
+   - Go to the original repository
+   - Click "New Pull Request"
+   - Select your branch and describe your changes
 
 ### 📋 Contribution Guidelines
 
@@ -1016,15 +1054,16 @@ Please use the [GitHub Issues](https://github.com/ProfitPulse/issues) page to re
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 Support & Community
+### 📜 License Summary
 
-- 📧 **Email**: support@profitpulse.ai
-- 🐛 **Issues**: [GitHub Issues](https://github.com/ProfitPulse/issues)
-- 📖 **Documentation**: [docs.profitpulse.ai](https://docs.profitpulse.ai)
-- 💬 **Discord**: [Join our community](https://discord.gg/profitpulse)
-- 🐦 **Twitter**: [@ProfitPulseAI](https://twitter.com/ProfitPulseAI)
+- ✅ **Commercial use** - Use for commercial purposes
+- ✅ **Modification** - Modify the source code
+- ✅ **Distribution** - Distribute the software
+- ✅ **Private use** - Use privately
+- ❗ **License and copyright notice** - Include license and copyright notice
+- ❗ **No liability** - Software is provided "as is"
 
 ---
 
