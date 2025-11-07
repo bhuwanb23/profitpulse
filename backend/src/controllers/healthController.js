@@ -11,6 +11,7 @@ const {
   AIAnalytics, 
   AIRecommendation 
 } = require('../models');
+const aiClient = require('../services/ai-ml');
 
 /**
  * Get database health status
@@ -82,6 +83,12 @@ const getSystemHealth = async (req, res) => {
       database: {
         connected: false,
         status: 'unknown'
+      },
+      aiml: {
+        connected: false,
+        status: 'unknown',
+        lastCheck: null,
+        responseTime: null
       }
     };
     
@@ -94,6 +101,34 @@ const getSystemHealth = async (req, res) => {
       health.database.connected = false;
       health.database.status = 'unhealthy';
       health.database.error = dbError.message;
+    }
+    
+    // Test AI/ML service connection
+    try {
+      const aiStartTime = Date.now();
+      await aiClient.healthCheck();
+      
+      health.aiml.connected = true;
+      health.aiml.status = 'healthy';
+      health.aiml.lastCheck = new Date().toISOString();
+      health.aiml.responseTime = Date.now() - aiStartTime;
+      
+      // Get additional AI/ML metrics
+      const aiHealthStatus = await aiClient.getHealthStatus();
+      health.aiml.circuitBreaker = aiHealthStatus.circuitBreaker.state;
+      health.aiml.monitoring = aiHealthStatus.healthMonitor.isMonitoring;
+      health.aiml.successRate = aiHealthStatus.metrics.requests.successRate;
+      
+    } catch (aiError) {
+      health.aiml.connected = false;
+      health.aiml.status = 'unhealthy';
+      health.aiml.error = aiError.message;
+      health.aiml.lastCheck = new Date().toISOString();
+    }
+    
+    // Determine overall status
+    if (!health.database.connected || !health.aiml.connected) {
+      health.status = 'DEGRADED';
     }
     
     res.json(health);

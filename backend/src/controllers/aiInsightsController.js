@@ -1,6 +1,9 @@
 const { AIAnalytics, AIRecommendation, Organization, Client, Invoice, Ticket, Service, Budget, Expense } = require('../models')
 const { Op } = require('sequelize')
 const { validationResult } = require('express-validator')
+const aiClient = require('../services/ai-ml')
+const ProfitabilityMapper = require('../services/ai-ml/mappers/profitabilityMapper')
+const winston = require('winston')
 
 // GET /api/ai/insights/profitability-genome - Profitability genome
 const getProfitabilityGenome = async (req, res) => {
@@ -55,7 +58,237 @@ const getProfitabilityGenome = async (req, res) => {
       const services = client.services || []
       const tickets = client.tickets || []
 
-      // Calculate profitability DNA components
+      try {
+        // Prepare client data for AI/ML analysis
+        const clientData = await prepareClientDataForAI(client, invoices, services, tickets)
+        
+        // Validate data quality
+        const validation = ProfitabilityMapper.validateBackendData(clientData)
+        if (!validation.isValid) {
+          winston.warn('Client data validation failed, using fallback analysis', {
+            clientId: client.id,
+            errors: validation.errors
+          })
+          
+          // Fall back to original analysis if data is invalid
+          const fallbackResult = await performFallbackProfitabilityAnalysis(client, invoices, services, tickets)
+          profitabilityGenomes.push(fallbackResult)
+          continue
+        }
+
+        // Try AI/ML service prediction
+        let aiPredictionResult = null
+        try {
+          // Map to AI/ML format
+          const aimlRequest = ProfitabilityMapper.mapBackendToAIML(clientData, {
+            forecastHorizon: 6,
+            includeConfidence: true,
+            includeFactors: true,
+            includeRecommendations: true
+          })
+
+          // Call AI/ML service with fallback enabled
+          const aimlResponse = await aiClient.predictProfitability(aimlRequest, {
+            useCircuitBreaker: true,
+            useFallback: true,
+            cacheKey: ProfitabilityMapper.createCacheKey(clientData),
+            cacheTTL: 300000 // 5 minutes
+          })
+
+          // Validate AI/ML response
+          const responseValidation = ProfitabilityMapper.validateAIMLResponse(aimlResponse)
+          if (responseValidation.isValid) {
+            // Map AI/ML response to backend format
+            aiPredictionResult = ProfitabilityMapper.mapAIMLToBackend(aimlResponse)
+            
+            winston.info('AI/ML profitability prediction successful', {
+              clientId: client.id,
+              profitabilityScore: aiPredictionResult.profitability.profitabilityScore,
+              confidence: aiPredictionResult.profitability.confidence,
+              isFallback: aiPredictionResult.metadata.isFallback
+            })
+          } else {
+            winston.warn('AI/ML response validation failed, using fallback', {
+              clientId: client.id,
+              errors: responseValidation.errors
+            })
+          }
+
+        } catch (aiError) {
+          winston.error('AI/ML profitability prediction failed, using fallback', {
+            clientId: client.id,
+            error: aiError.message
+          })
+        }
+
+        // Use AI prediction if available, otherwise fall back to original analysis
+        if (aiPredictionResult && !aiPredictionResult.metadata.isFallback) {
+          // Convert AI prediction to genome format
+          const genomeResult = convertAIPredictionToGenome(aiPredictionResult, client, {
+            include_dna_analysis,
+            include_genetic_factors,
+            include_evolution_tracking
+          })
+          profitabilityGenomes.push(genomeResult)
+        } else {
+          // Fall back to original analysis
+          const fallbackResult = await performFallbackProfitabilityAnalysis(client, invoices, services, tickets)
+          profitabilityGenomes.push(fallbackResult)
+        }
+
+      } catch (error) {
+        winston.error('Error in profitability analysis, using basic fallback', {
+          clientId: client.id,
+          error: error.message
+        })
+        
+        // Basic fallback
+        const basicResult = await performFallbackProfitabilityAnalysis(client, invoices, services, tickets)
+        profitabilityGenomes.push(basicResult)
+      }
+    }
+
+    // Helper function to prepare client data for AI analysis
+    async function prepareClientDataForAI(client, invoices, services, tickets) {
+      const paidInvoices = invoices.filter(inv => inv.status === 'paid')
+      const totalRevenue = paidInvoices.reduce((sum, inv) => sum + parseFloat(inv.total_amount), 0)
+      const totalCosts = services.reduce((sum, service) => sum + (service.cost || 0), 0)
+      const activeServices = services.filter(service => service.status === 'active')
+      
+      // Calculate metrics
+      const monthlyRevenue = totalRevenue / Math.max(1, invoices.length)
+      const avgResolutionTime = tickets.length > 0 ? 
+        tickets.reduce((sum, ticket) => {
+          if (ticket.resolved_at && ticket.created_at) {
+            return sum + (new Date(ticket.resolved_at) - new Date(ticket.created_at)) / (1000 * 60 * 60)
+          }
+          return sum
+        }, 0) / tickets.length : 0
+
+      const slaCompliance = tickets.length > 0 ? 
+        tickets.filter(ticket => ticket.status === 'resolved').length / tickets.length : 0.95
+
+      return {
+        id: client.id,
+        monthlyRevenue,
+        totalCosts,
+        profitMargin: totalRevenue > 0 ? (totalRevenue - totalCosts) / totalRevenue : 0,
+        ticketCount: tickets.length,
+        avgResolutionTime,
+        slaCompliance,
+        clientSatisfaction: 4.0, // Default value
+        serviceUtilization: services.length > 0 ? activeServices.length / services.length : 0.7,
+        supportHours: tickets.length * 2, // Estimate
+        clientSize: totalRevenue > 50000 ? 'large' : totalRevenue > 20000 ? 'medium' : 'small',
+        industry: 'technology',
+        contractLength: 12,
+        paymentTerms: 30,
+        serviceTier: 'standard',
+        location: 'domestic',
+        monthsActive: client.created_at ? 
+          Math.floor((Date.now() - new Date(client.created_at)) / (1000 * 60 * 60 * 24 * 30)) : 12,
+        revenueHistory: invoices.map(inv => parseFloat(inv.total_amount)),
+        costHistory: services.map(service => service.cost || 0),
+        incidentHistory: tickets.map(ticket => ({ 
+          date: ticket.created_at, 
+          priority: ticket.priority 
+        })),
+        satisfactionHistory: [4.0, 4.1, 3.9, 4.2] // Mock data
+      }
+    }
+
+    // Helper function to convert AI prediction to genome format
+    function convertAIPredictionToGenome(aiResult, client, options) {
+      const profitabilityScore = aiResult.profitability.profitabilityScore
+      const factors = aiResult.factors
+      
+      // Map AI factors to DNA components
+      const profitabilityDNA = {
+        revenue_efficiency: factors.revenueImpact || 0.7,
+        cost_optimization: factors.costEfficiency || 0.6,
+        service_utilization: factors.serviceUtilization || 0.8,
+        payment_behavior: factors.clientSatisfaction || 0.9,
+        growth_potential: factors.operationalEfficiency || 0.7,
+        retention_stability: factors.marketPosition || 0.8
+      }
+
+      // Generate genetic factors analysis from AI predictions
+      const geneticFactors = options.include_genetic_factors === 'true' ? {
+        dominant_traits: Object.entries(profitabilityDNA)
+          .sort(([,a], [,b]) => b - a)
+          .slice(0, 3)
+          .map(([trait, value]) => ({ trait, strength: Math.round(value * 100) / 100 })),
+        recessive_traits: Object.entries(profitabilityDNA)
+          .sort(([,a], [,b]) => a - b)
+          .slice(0, 2)
+          .map(([trait, value]) => ({ trait, weakness: Math.round(value * 100) / 100 })),
+        genetic_markers: [
+          { marker: 'REV_EFF', value: profitabilityDNA.revenue_efficiency, significance: 'high' },
+          { marker: 'COST_OPT', value: profitabilityDNA.cost_optimization, significance: 'medium' },
+          { marker: 'SERV_UTIL', value: profitabilityDNA.service_utilization, significance: 'high' },
+          { marker: 'PAY_BEHAV', value: profitabilityDNA.payment_behavior, significance: 'critical' },
+          { marker: 'GROWTH_POT', value: profitabilityDNA.growth_potential, significance: 'medium' },
+          { marker: 'RET_STAB', value: profitabilityDNA.retention_stability, significance: 'high' }
+        ]
+      } : null
+
+      // Generate evolution tracking
+      const evolutionTracking = options.include_evolution_tracking === 'true' ? {
+        current_generation: 'Gen-3',
+        evolution_stage: profitabilityScore > 0.8 ? 'Advanced' : profitabilityScore > 0.6 ? 'Intermediate' : 'Basic',
+        evolution_timeline: [
+          { period: 'Q1 2024', score: Math.round((profitabilityScore - 0.1) * 100) / 100 },
+          { period: 'Q2 2024', score: Math.round((profitabilityScore - 0.05) * 100) / 100 },
+          { period: 'Q3 2024', score: Math.round(profitabilityScore * 100) / 100 },
+          { period: 'Q4 2024', score: Math.round((profitabilityScore + 0.05) * 100) / 100 }
+        ],
+        next_evolution_target: Math.round((profitabilityScore + 0.1) * 100) / 100,
+        evolution_recommendations: [
+          'Optimize revenue efficiency through pricing strategies',
+          'Improve service utilization through client engagement',
+          'Enhance payment behavior through automated reminders',
+          'Strengthen retention stability through value delivery'
+        ]
+      } : null
+
+      // Generate DNA analysis
+      const dnaAnalysis = options.include_dna_analysis === 'true' ? {
+        dna_sequence: generateDNASequence(profitabilityDNA),
+        mutation_probability: Math.round((1 - profitabilityScore) * 100) / 100,
+        adaptation_capacity: Math.round(profitabilityScore * 100) / 100,
+        survival_probability: Math.round((profitabilityScore * 0.8 + 0.2) * 100) / 100,
+        fitness_score: Math.round(profitabilityScore * 100) / 100
+      } : null
+
+      return {
+        client_id: client.id,
+        client_name: client.name,
+        client_company: client.company,
+        organization_name: client.organization ? client.organization.name : 'Unknown',
+        profitability_score: Math.round(profitabilityScore * 100) / 100,
+        profitability_dna: profitabilityDNA,
+        genetic_factors: geneticFactors,
+        evolution_tracking: evolutionTracking,
+        dna_analysis: dnaAnalysis,
+        genome_classification: {
+          category: profitabilityScore > 0.8 ? 'Elite' : profitabilityScore > 0.6 ? 'Premium' : profitabilityScore > 0.4 ? 'Standard' : 'Basic',
+          tier: Math.ceil(profitabilityScore * 5),
+          status: profitabilityScore > 0.7 ? 'Thriving' : profitabilityScore > 0.5 ? 'Stable' : 'At Risk'
+        },
+        recommendations: aiResult.recommendations.map(rec => rec.description) || [
+          'Focus on revenue efficiency optimization',
+          'Improve service utilization rates',
+          'Enhance payment behavior patterns',
+          'Strengthen client retention strategies'
+        ],
+        ai_powered: true,
+        confidence: aiResult.profitability.confidence
+      }
+    }
+
+    // Helper function for fallback profitability analysis (original logic)
+    async function performFallbackProfitabilityAnalysis(client, invoices, services, tickets) {
+      // Original profitability calculation logic
       const profitabilityDNA = {
         revenue_efficiency: 0,
         cost_optimization: 0,
@@ -70,7 +303,7 @@ const getProfitabilityGenome = async (req, res) => {
       const totalRevenue = paidInvoices.reduce((sum, inv) => sum + parseFloat(inv.total_amount), 0)
       const avgInvoiceValue = paidInvoices.length > 0 ? totalRevenue / paidInvoices.length : 0
       
-      profitabilityDNA.revenue_efficiency = Math.min(avgInvoiceValue / 10000, 1.0) // Normalize to 0-1
+      profitabilityDNA.revenue_efficiency = Math.min(avgInvoiceValue / 10000, 1.0)
 
       // 2. Cost Optimization Analysis
       const activeServices = services.filter(service => service.status === 'active')
@@ -113,9 +346,9 @@ const getProfitabilityGenome = async (req, res) => {
       profitabilityDNA.growth_potential = Math.max(0, Math.min(1, (growthRate + 1) / 2))
 
       // 6. Retention Stability Analysis
-      const clientAge = client.createdAt ? 
+      const clientAge = client.created_at ? 
         (Date.now() - new Date(client.created_at).getTime()) / (1000 * 60 * 60 * 24 * 365) : 0
-      const retentionStability = Math.min(clientAge / 3, 1.0) // 3 years = max stability
+      const retentionStability = Math.min(clientAge / 3, 1.0)
       
       profitabilityDNA.retention_stability = retentionStability
 
@@ -170,7 +403,7 @@ const getProfitabilityGenome = async (req, res) => {
         fitness_score: Math.round(profitabilityScore * 100) / 100
       } : null
 
-      profitabilityGenomes.push({
+      return {
         client_id: client.id,
         client_name: client.name,
         client_company: client.company,
@@ -190,8 +423,10 @@ const getProfitabilityGenome = async (req, res) => {
           'Improve service utilization rates',
           'Enhance payment behavior patterns',
           'Strengthen client retention strategies'
-        ]
-      })
+        ],
+        ai_powered: false,
+        confidence: 0.7
+      }
     }
 
     // Calculate overall genome summary

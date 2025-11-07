@@ -1,12 +1,35 @@
 const axios = require('axios');
 const winston = require('winston');
+const { getConfig } = require('../../config/aiml');
+const RetryUtility = require('../../utils/retry');
+const { CircuitBreaker } = require('./circuitBreaker');
+const AIMLHealthMonitor = require('./healthMonitor');
+const AIMLFallbackService = require('./fallback');
+const AIMLMetrics = require('./metrics');
+const aimlLogger = require('../../utils/aimlLogger');
 
 class AIClient {
   constructor() {
-    // Get configuration from environment variables
-    this.baseUrl = process.env.AI_ML_SERVICE_URL || 'http://localhost:8000';
-    this.apiKey = process.env.AI_ML_API_KEY || 'admin_key';
-    this.timeout = process.env.AI_ML_TIMEOUT ? parseInt(process.env.AI_ML_TIMEOUT) : 30000;
+    // Get configuration from centralized config
+    this.config = getConfig();
+    this.baseUrl = this.config.baseUrl;
+    this.apiKey = this.config.apiKey;
+    this.timeout = this.config.timeout;
+    
+    // Initialize services
+    this.metrics = new AIMLMetrics();
+    this.fallbackService = new AIMLFallbackService();
+    
+    // Initialize circuit breaker
+    this.circuitBreaker = new CircuitBreaker({
+      threshold: this.config.circuitBreaker.threshold,
+      timeout: this.config.circuitBreaker.timeout,
+      resetTimeout: this.config.circuitBreaker.resetTimeout,
+      expectedErrors: ['ValidationError', 'AuthenticationError']
+    });
+    
+    // Initialize health monitor
+    this.healthMonitor = new AIMLHealthMonitor(this, this.config.health);
     
     // Create axios instance with default configuration
     this.client = axios.create({
@@ -17,48 +40,219 @@ class AIClient {
         'Authorization': `Bearer ${this.apiKey}`
       }
     });
+    
+    // Setup event listeners
+    this.setupEventListeners();
+    
+    // Start services (don't await to avoid blocking)
+    this.initialize().catch(error => {
+      winston.error('AI/ML Client initialization failed:', error);
+    });
 
-    // Add request interceptor for logging (only if interceptors exist)
-    if (this.client && this.client.interceptors) {
-      this.client.interceptors.request.use(
-        (config) => {
-          winston.info(`AI/ML API Request: ${config.method?.toUpperCase()} ${config.url}`, {
-            method: config.method?.toUpperCase(),
-            url: config.url,
-            headers: config.headers,
-            data: config.data
-          });
-          return config;
-        },
-        (error) => {
-          winston.error('AI/ML API Request Error:', error);
-          return Promise.reject(error);
-        }
-      );
-
-      // Add response interceptor for logging and error handling
-      this.client.interceptors.response.use(
-        (response) => {
-          winston.info(`AI/ML API Response: ${response.status} ${response.config?.url}`, {
-            status: response.status,
-            url: response.config?.url,
-            data: response.data
-          });
-          return response;
-        },
-        (error) => {
-          winston.error('AI/ML API Response Error:', {
-            message: error.message,
-            status: error.response?.status,
-            url: error.response?.config?.url,
-            data: error.response?.data
-          });
-          return Promise.reject(error);
-        }
-      );
+    // Setup axios interceptors
+    this.setupInterceptors();
+  }
+  
+  /**
+   * Initialize AI client services
+   */
+  async initialize() {
+    try {
+      // Start fallback cache cleanup
+      this.fallbackService.startCacheCleanup();
+      
+      // Start health monitoring if enabled
+      if (this.config.features.enableMetrics) {
+        this.healthMonitor.startMonitoring();
+      }
+      
+      winston.info('AI/ML Client initialized successfully', {
+        baseUrl: this.baseUrl,
+        timeout: this.timeout,
+        circuitBreakerEnabled: this.config.features.enableCircuitBreaker,
+        metricsEnabled: this.config.features.enableMetrics
+      });
+      
+    } catch (error) {
+      winston.error('Failed to initialize AI/ML Client:', error);
+      throw error;
     }
   }
+  
+  /**
+   * Setup event listeners for services
+   */
+  setupEventListeners() {
+    // Circuit breaker events
+    this.circuitBreaker.on('stateChange', (event) => {
+      aimlLogger.logCircuitBreakerStateChange(event.from, event.to, event.reason);
+      this.metrics.recordCircuitBreakerTrip(event.reason);
+    });
+    
+    // Health monitor events
+    this.healthMonitor.on('serviceHealthy', () => {
+      winston.info('AI/ML service is healthy');
+    });
+    
+    this.healthMonitor.on('serviceUnhealthy', () => {
+      winston.warn('AI/ML service is unhealthy');
+    });
+  }
+  
+  /**
+   * Setup axios interceptors
+   */
+  setupInterceptors() {
+    // Request interceptor
+    this.client.interceptors.request.use(
+      (config) => {
+        const context = aimlLogger.createRequestContext();
+        config.metadata = { ...context, startTime: Date.now() };
+        
+        if (this.config.logging.enableRequestLogging) {
+          aimlLogger.logRequest(
+            config.method,
+            config.url,
+            config.data,
+            {
+              requestId: context.requestId,
+              timeout: config.timeout
+            }
+          );
+        }
+        
+        this.metrics.recordRequest(config.method, config.url);
+        return config;
+      },
+      (error) => {
+        winston.error('AI/ML API Request Setup Error:', error);
+        return Promise.reject(error);
+      }
+    );
 
+    // Response interceptor
+    this.client.interceptors.response.use(
+      (response) => {
+        const duration = Date.now() - response.config.metadata.startTime;
+        
+        if (this.config.logging.enableResponseLogging) {
+          aimlLogger.logResponse(
+            response.config.method,
+            response.config.url,
+            response.status,
+            response.data,
+            duration,
+            {
+              requestId: response.config.metadata.requestId
+            }
+          );
+        }
+        
+        this.metrics.recordSuccess(
+          response.config.method,
+          response.config.url,
+          duration
+        );
+        
+        return response;
+      },
+      (error) => {
+        const duration = error.config ? Date.now() - error.config.metadata.startTime : 0;
+        
+        aimlLogger.logError(
+          error.config?.method || 'unknown',
+          error.config?.url || 'unknown',
+          error,
+          duration,
+          0,
+          {
+            requestId: error.config?.metadata?.requestId
+          }
+        );
+        
+        this.metrics.recordFailure(
+          error.config?.method || 'unknown',
+          error.config?.url || 'unknown',
+          error,
+          duration
+        );
+        
+        return Promise.reject(error);
+      }
+    );
+  }
+
+  /**
+   * Execute request with all enhancements (retry, circuit breaker, fallback)
+   * @param {Function} requestFn - Function that makes the HTTP request
+   * @param {string} model - Model name for fallback
+   * @param {string} method - Method name for fallback
+   * @param {Object} data - Request data for fallback
+   * @param {Object} options - Additional options
+   * @returns {Promise<Object>} Response data
+   */
+  async executeRequest(requestFn, model, method, data = {}, options = {}) {
+    const {
+      useCircuitBreaker = this.config.features.enableCircuitBreaker,
+      useFallback = this.config.features.enableFallback,
+      retryOptions = {}
+    } = options;
+    
+    try {
+      let result;
+      
+      if (useCircuitBreaker) {
+        // Use circuit breaker with retry
+        result = await RetryUtility.withCircuitBreakerRetry(
+          requestFn,
+          this.circuitBreaker,
+          {
+            retries: this.config.retries,
+            delay: this.config.retryDelay,
+            backoff: this.config.retryBackoff,
+            context: `${model}.${method}`,
+            onRetry: (error, attempt) => {
+              aimlLogger.logRetry(
+                'POST',
+                `/${model}/${method}`,
+                attempt,
+                this.config.retries,
+                this.config.retryDelay * Math.pow(this.config.retryBackoff, attempt - 1),
+                error
+              );
+              this.metrics.recordRetry(error.message, attempt, model);
+            },
+            ...retryOptions
+          }
+        );
+      } else {
+        // Use regular retry
+        result = await RetryUtility.withAIMLRetry(requestFn, {
+          retries: this.config.retries,
+          delay: this.config.retryDelay,
+          backoff: this.config.retryBackoff,
+          context: `${model}.${method}`,
+          ...retryOptions
+        });
+      }
+      
+      return result.data;
+      
+    } catch (error) {
+      winston.warn(`AI/ML request failed for ${model}.${method}:`, error.message);
+      
+      // Try fallback if enabled
+      if (useFallback && this.fallbackService.isAvailable(model, method)) {
+        aimlLogger.logFallback('POST', `/${model}/${method}`, 'simulated', error);
+        this.metrics.recordFallback('simulated', model, error.message);
+        
+        return await this.fallbackService.getFallbackResponse(model, method, data, options);
+      }
+      
+      throw error;
+    }
+  }
+  
   /**
    * Health check for the AI/ML service
    * @returns {Promise<Object>} Health status
@@ -71,6 +265,28 @@ class AIClient {
       throw new Error(`Health check failed: ${error.message}`);
     }
   }
+  
+  /**
+   * Get comprehensive health status including all services
+   * @returns {Promise<Object>} Complete health status
+   */
+  async getHealthStatus() {
+    return {
+      client: {
+        initialized: true,
+        baseUrl: this.baseUrl,
+        timeout: this.timeout
+      },
+      circuitBreaker: this.circuitBreaker.getStatus(),
+      healthMonitor: this.healthMonitor.getHealthStatus(),
+      metrics: this.metrics.getMetricsSummary(),
+      fallback: {
+        available: true,
+        handlers: this.fallbackService.getAvailableHandlers(),
+        cacheStats: this.fallbackService.getCacheStats()
+      }
+    };
+  }
 
   /**
    * Predict client profitability
@@ -79,18 +295,19 @@ class AIClient {
    * @returns {Promise<Object>} Prediction result
    */
   async predictProfitability(data, options = {}) {
-    try {
-      const response = await this.client.post('/api/profitability', data, {
+    return this.executeRequest(
+      () => this.client.post('/api/profitability', data, {
         params: {
           model_version: options.modelVersion,
           return_confidence: options.returnConfidence || false,
           return_explanation: options.returnExplanation || false
         }
-      });
-      return response.data;
-    } catch (error) {
-      throw new Error(`Profitability prediction failed: ${error.message}`);
-    }
+      }),
+      'profitability',
+      'predict',
+      data,
+      options
+    );
   }
 
   /**
@@ -100,16 +317,17 @@ class AIClient {
    * @returns {Promise<Object>} Prediction result
    */
   async predictChurn(data, options = {}) {
-    try {
-      const response = await this.client.post('/api/churn/predict', data, {
+    return this.executeRequest(
+      () => this.client.post('/api/churn/predict', data, {
         params: {
           model_version: options.modelVersion
         }
-      });
-      return response.data;
-    } catch (error) {
-      throw new Error(`Churn prediction failed: ${error.message}`);
-    }
+      }),
+      'churn',
+      'predict',
+      data,
+      options
+    );
   }
 
   /**
@@ -119,16 +337,17 @@ class AIClient {
    * @returns {Promise<Object>} Detection result
    */
   async detectRevenueLeaks(data, options = {}) {
-    try {
-      const response = await this.client.post('/api/revenue-leak/detect', data, {
+    return this.executeRequest(
+      () => this.client.post('/api/revenue-leak/detect', data, {
         params: {
           model_version: options.modelVersion
         }
-      });
-      return response.data;
-    } catch (error) {
-      throw new Error(`Revenue leak detection failed: ${error.message}`);
-    }
+      }),
+      'revenue_leak',
+      'detect',
+      data,
+      options
+    );
   }
 
   /**
@@ -138,16 +357,17 @@ class AIClient {
    * @returns {Promise<Object>} Pricing recommendation
    */
   async getDynamicPricing(data, options = {}) {
-    try {
-      const response = await this.client.post('/api/pricing/recommend', data, {
+    return this.executeRequest(
+      () => this.client.post('/api/pricing/recommend', data, {
         params: {
           model_version: options.modelVersion
         }
-      });
-      return response.data;
-    } catch (error) {
-      throw new Error(`Dynamic pricing recommendation failed: ${error.message}`);
-    }
+      }),
+      'pricing',
+      'recommend',
+      data,
+      options
+    );
   }
 
   /**
@@ -157,16 +377,17 @@ class AIClient {
    * @returns {Promise<Object>} Optimization result
    */
   async optimizeBudget(data, options = {}) {
-    try {
-      const response = await this.client.post('/api/budget/optimize', data, {
+    return this.executeRequest(
+      () => this.client.post('/api/budget/optimize', data, {
         params: {
           model_version: options.modelVersion
         }
-      });
-      return response.data;
-    } catch (error) {
-      throw new Error(`Budget optimization failed: ${error.message}`);
-    }
+      }),
+      'budget',
+      'optimize',
+      data,
+      options
+    );
   }
 
   /**
@@ -176,18 +397,19 @@ class AIClient {
    * @returns {Promise<Object>} Forecast result
    */
   async forecastDemand(data, options = {}) {
-    try {
-      const response = await this.client.post('/api/demand/forecast', data, {
+    return this.executeRequest(
+      () => this.client.post('/api/demand/forecast', data, {
         params: {
           model_version: options.modelVersion,
           forecast_horizon: options.forecastHorizon || 30,
           seasonality: options.seasonality !== false
         }
-      });
-      return response.data;
-    } catch (error) {
-      throw new Error(`Demand forecasting failed: ${error.message}`);
-    }
+      }),
+      'demand',
+      'forecast',
+      data,
+      options
+    );
   }
 
   /**
@@ -197,18 +419,19 @@ class AIClient {
    * @returns {Promise<Object>} Anomaly detection result
    */
   async detectAnomalies(data, options = {}) {
-    try {
-      const response = await this.client.post('/api/anomaly/detect', data, {
+    return this.executeRequest(
+      () => this.client.post('/api/anomaly/detect', data, {
         params: {
           model_version: options.modelVersion,
           detection_method: options.detectionMethod || 'ensemble',
           window_size: options.windowSize || 100
         }
-      });
-      return response.data;
-    } catch (error) {
-      throw new Error(`Anomaly detection failed: ${error.message}`);
-    }
+      }),
+      'anomaly',
+      'detect',
+      data,
+      options
+    );
   }
 
   /**
@@ -257,6 +480,40 @@ class AIClient {
     } catch (error) {
       throw new Error(`Batch prediction failed: ${error.message}`);
     }
+  }
+
+  /**
+   * Reset circuit breaker
+   */
+  resetCircuitBreaker() {
+    this.circuitBreaker.reset();
+    winston.info('Circuit breaker reset manually');
+  }
+  
+  /**
+   * Get metrics summary
+   * @returns {Object} Metrics summary
+   */
+  getMetrics() {
+    return this.metrics.getMetricsSummary();
+  }
+  
+  /**
+   * Clear fallback cache
+   * @param {string} pattern - Optional pattern to match keys
+   */
+  clearFallbackCache(pattern = null) {
+    this.fallbackService.clearCache(pattern);
+  }
+  
+  /**
+   * Destroy client and cleanup resources
+   */
+  destroy() {
+    this.healthMonitor.destroy();
+    this.fallbackService.destroy();
+    this.circuitBreaker.removeAllListeners();
+    winston.info('AI/ML Client destroyed');
   }
 }
 
