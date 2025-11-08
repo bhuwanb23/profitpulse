@@ -41,6 +41,17 @@ const advancedFeaturesRoutes = require('./src/routes/advancedFeatures');
 const { connectDatabase } = require('./src/config/database');
 const scheduler = require('./src/services/scheduler');
 
+// Import monitoring middleware
+const {
+  correlationId,
+  requestLogger,
+  performanceMonitor,
+  cacheMiddleware,
+  errorMiddleware,
+  healthCheck,
+  metricsEndpoint
+} = require('./src/middleware/monitoring');
+
 // Create Express app
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -69,6 +80,13 @@ if (process.env.NODE_ENV !== 'production') {
     )
   }));
 }
+
+// Monitoring middleware (early in the stack)
+app.use(correlationId);
+app.use(healthCheck);
+app.use(metricsEndpoint);
+app.use(requestLogger);
+app.use(performanceMonitor);
 
 // Security middleware
 app.use(helmet({
@@ -112,30 +130,30 @@ const { getSystemHealth, getDatabaseHealth } = require('./src/controllers/health
 app.get('/health', getSystemHealth);
 app.get('/health/database', getDatabaseHealth);
 
-// API routes
+// API routes with caching for read-heavy endpoints
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/organizations', organizationRoutes);
-app.use('/api/clients', clientRoutes);
-app.use('/api/services', serviceRoutes);
-app.use('/api/tickets/analytics', ticketAnalyticsRoutes);
+app.use('/api/clients', cacheMiddleware({ ttl: 300, exclude: ['/create', '/update', '/delete'] }), clientRoutes);
+app.use('/api/services', cacheMiddleware({ ttl: 600 }), serviceRoutes);
+app.use('/api/tickets/analytics', cacheMiddleware({ ttl: 180 }), ticketAnalyticsRoutes);
 app.use('/api/tickets', ticketOperationsRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/budgets', budgetRoutes);
-app.use('/api/analytics', analyticsRoutes);
-app.use('/api/analytics', billingAnalyticsRoutes);
-app.use('/api/ai', aiRoutes);
-app.use('/api/ai/analytics', aiAnalyticsRoutes);
-app.use('/api/ai/predictions', predictiveAnalyticsRoutes);
-app.use('/api/ai/insights', aiInsightsRoutes);
+app.use('/api/analytics', cacheMiddleware({ ttl: 300 }), analyticsRoutes);
+app.use('/api/analytics', cacheMiddleware({ ttl: 300 }), billingAnalyticsRoutes);
+app.use('/api/ai', cacheMiddleware({ ttl: 120, exclude: ['/predict', '/analyze'] }), aiRoutes);
+app.use('/api/ai/analytics', cacheMiddleware({ ttl: 180 }), aiAnalyticsRoutes);
+app.use('/api/ai/predictions', cacheMiddleware({ ttl: 60 }), predictiveAnalyticsRoutes);
+app.use('/api/ai/insights', cacheMiddleware({ ttl: 300 }), aiInsightsRoutes);
 app.use('/api/integrations/superops', superOpsRoutes);
 app.use('/api/integrations', integrationRoutes);
-app.use('/api/reports', reportRoutes);
+app.use('/api/reports', cacheMiddleware({ ttl: 600 }), reportRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/ai', aiHealthRoutes);
 app.use('/api/batch', batchRoutes);
-app.use('/api/advanced', advancedFeaturesRoutes);
+app.use('/api/advanced', cacheMiddleware({ ttl: 180 }), advancedFeaturesRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -147,8 +165,8 @@ app.use((req, res) => {
   });
 });
 
-// Global error handler
-app.use(errorHandler);
+// Enhanced error handling middleware
+app.use(errorMiddleware);
 
 // Graceful shutdown
 process.on('SIGTERM', () => {

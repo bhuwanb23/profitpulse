@@ -2,10 +2,11 @@ const axios = require('axios');
 const winston = require('winston');
 const { getConfig } = require('../../config/aiml');
 const RetryUtility = require('../../utils/retry');
-const { CircuitBreaker } = require('./circuitBreaker');
-const AIMLHealthMonitor = require('./healthMonitor');
-const AIMLFallbackService = require('./fallback');
-const AIMLMetrics = require('./metrics');
+const CircuitBreaker = require('./circuitBreaker');
+const FallbackService = require('./fallback');
+const HealthMonitor = require('./healthMonitor');
+const MetricsCollector = require('./metrics');
+const { v4: uuidv4 } = require('uuid');
 const aimlLogger = require('../../utils/aimlLogger');
 
 class AIClient {
@@ -17,8 +18,8 @@ class AIClient {
     this.timeout = this.config.timeout;
     
     // Initialize services
-    this.metrics = new AIMLMetrics();
-    this.fallbackService = new AIMLFallbackService();
+    this.metrics = new MetricsCollector();
+    this.fallbackService = new FallbackService();
     
     // Initialize circuit breaker
     this.circuitBreaker = new CircuitBreaker({
@@ -29,7 +30,7 @@ class AIClient {
     });
     
     // Initialize health monitor
-    this.healthMonitor = new AIMLHealthMonitor(this, this.config.health);
+    this.healthMonitor = new HealthMonitor(this, this.config.health);
     
     // Create axios instance with default configuration
     this.client = axios.create({
@@ -195,9 +196,20 @@ class AIClient {
     const {
       useCircuitBreaker = this.config.features.enableCircuitBreaker,
       useFallback = this.config.features.enableFallback,
-      retryOptions = {}
+      useCache = true,
+      cacheTTL = 300,
+      retryOptions = {},
+      correlationId = uuidv4()
     } = options;
     
+    const startTime = Date.now();
+    const context = {
+      correlationId,
+      service: 'aiml',
+      operation: `${model}.${method}`,
+      modelType: model
+    };
+
     try {
       let result;
       
@@ -239,10 +251,17 @@ class AIClient {
       return result.data;
       
     } catch (error) {
-      winston.warn(`AI/ML request failed for ${model}.${method}:`, error.message);
+      winston.warn(`AI/ML request failed for ${model}.${method}:`, {
+        correlationId,
+        error: error.message,
+        model,
+        method
+      });
       
       // Try fallback if enabled
       if (useFallback && this.fallbackService.isAvailable(model, method)) {
+        winston.info('Using fallback service', { correlationId, model, method });
+        
         aimlLogger.logFallback('POST', `/${model}/${method}`, 'simulated', error);
         this.metrics.recordFallback('simulated', model, error.message);
         
