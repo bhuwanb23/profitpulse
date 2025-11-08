@@ -11,6 +11,8 @@ const Budget = require('./Budget');
 const Expense = require('./Expense');
 const AIAnalytics = require('./AIAnalytics');
 const AIRecommendation = require('./AIRecommendation');
+const BatchJob = require('./BatchJob');
+const BatchJobResult = require('./BatchJobResult');
 const Report = require('./Report');
 const ReportTemplate = require('./ReportTemplate');
 const ScheduledReport = require('./ScheduledReport');
@@ -30,6 +32,8 @@ const models = {
   Expense,
   AIAnalytics,
   AIRecommendation,
+  BatchJob,
+  BatchJobResult,
   Report,
   ReportTemplate,
   ScheduledReport,

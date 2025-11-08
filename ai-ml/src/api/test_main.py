@@ -81,6 +81,32 @@ class AnomalyRequest(BaseModel):
     business_data: Dict[str, Any]
     detection_options: Dict[str, Any]
 
+# Batch processing models
+class JobStatus(str, Enum):
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+class BatchJobRequest(BaseModel):
+    job_type: str
+    organization_id: str
+    client_ids: Optional[List[str]] = None
+    parameters: Dict[str, Any] = {}
+    priority: str = "normal"
+    scheduled_at: Optional[str] = None
+
+class BatchJobResponse(BaseModel):
+    job_id: str
+    status: JobStatus
+    created_at: str
+    estimated_completion: Optional[str] = None
+
+# In-memory job storage (in production, use Redis or database)
+batch_jobs = {}
+job_results = {}
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan management"""
@@ -128,7 +154,11 @@ async def root():
             "pricing": "/api/pricing/recommend",
             "budget": "/api/budget/optimize",
             "demand": "/api/demand/forecast",
-            "anomaly": "/api/anomaly/detect"
+            "anomaly": "/api/anomaly/detect",
+            "batch_jobs": "/api/batch/jobs",
+            "batch_submit": "/api/batch/submit",
+            "batch_status": "/api/batch/status/{job_id}",
+            "batch_results": "/api/batch/results/{job_id}"
         }
     }
 
@@ -468,6 +498,246 @@ async def detect_anomalies(request: AnomalyRequest):
             "is_fallback": False
         }
     }
+
+# Batch Processing Endpoints
+
+@app.post("/api/batch/submit")
+async def submit_batch_job(request: BatchJobRequest):
+    """Submit a batch processing job"""
+    job_id = str(uuid.uuid4())
+    
+    # Create job record
+    job = {
+        "job_id": job_id,
+        "job_type": request.job_type,
+        "organization_id": request.organization_id,
+        "client_ids": request.client_ids or [],
+        "parameters": request.parameters,
+        "priority": request.priority,
+        "status": JobStatus.PENDING,
+        "created_at": datetime.now().isoformat(),
+        "started_at": None,
+        "completed_at": None,
+        "progress": 0,
+        "total_items": len(request.client_ids) if request.client_ids else 0,
+        "processed_items": 0,
+        "failed_items": 0,
+        "estimated_completion": None
+    }
+    
+    batch_jobs[job_id] = job
+    
+    # Start processing asynchronously
+    asyncio.create_task(process_batch_job(job_id))
+    
+    logger.info(f"Batch job submitted: {job_id} - Type: {request.job_type}")
+    
+    return {
+        "success": True,
+        "job_id": job_id,
+        "status": JobStatus.PENDING,
+        "message": f"Batch job {request.job_type} submitted successfully",
+        "estimated_items": job["total_items"]
+    }
+
+@app.get("/api/batch/jobs")
+async def list_batch_jobs(organization_id: str = None, status: str = None):
+    """List batch jobs with optional filtering"""
+    jobs = list(batch_jobs.values())
+    
+    # Filter by organization_id
+    if organization_id:
+        jobs = [job for job in jobs if job["organization_id"] == organization_id]
+    
+    # Filter by status
+    if status:
+        jobs = [job for job in jobs if job["status"] == status]
+    
+    # Sort by created_at (newest first)
+    jobs.sort(key=lambda x: x["created_at"], reverse=True)
+    
+    return {
+        "success": True,
+        "jobs": jobs,
+        "total_count": len(jobs)
+    }
+
+@app.get("/api/batch/status/{job_id}")
+async def get_batch_job_status(job_id: str):
+    """Get status of a specific batch job"""
+    if job_id not in batch_jobs:
+        raise HTTPException(status_code=404, detail="Batch job not found")
+    
+    job = batch_jobs[job_id]
+    
+    return {
+        "success": True,
+        "job_id": job_id,
+        "status": job["status"],
+        "progress": {
+            "percentage": round((job["processed_items"] / max(job["total_items"], 1)) * 100, 2),
+            "processed_items": job["processed_items"],
+            "total_items": job["total_items"],
+            "failed_items": job["failed_items"]
+        },
+        "timestamps": {
+            "created_at": job["created_at"],
+            "started_at": job["started_at"],
+            "completed_at": job["completed_at"],
+            "estimated_completion": job["estimated_completion"]
+        }
+    }
+
+@app.get("/api/batch/results/{job_id}")
+async def get_batch_job_results(job_id: str):
+    """Get results of a completed batch job"""
+    if job_id not in batch_jobs:
+        raise HTTPException(status_code=404, detail="Batch job not found")
+    
+    job = batch_jobs[job_id]
+    
+    if job["status"] not in [JobStatus.COMPLETED, JobStatus.FAILED]:
+        raise HTTPException(status_code=400, detail="Job not yet completed")
+    
+    results = job_results.get(job_id, {})
+    
+    return {
+        "success": True,
+        "job_id": job_id,
+        "status": job["status"],
+        "results": results,
+        "summary": {
+            "total_processed": job["processed_items"],
+            "successful": job["processed_items"] - job["failed_items"],
+            "failed": job["failed_items"],
+            "processing_time": calculate_processing_time(job)
+        }
+    }
+
+@app.delete("/api/batch/jobs/{job_id}")
+async def cancel_batch_job(job_id: str):
+    """Cancel a running batch job"""
+    if job_id not in batch_jobs:
+        raise HTTPException(status_code=404, detail="Batch job not found")
+    
+    job = batch_jobs[job_id]
+    
+    if job["status"] in [JobStatus.COMPLETED, JobStatus.FAILED]:
+        raise HTTPException(status_code=400, detail="Cannot cancel completed job")
+    
+    job["status"] = JobStatus.CANCELLED
+    job["completed_at"] = datetime.now().isoformat()
+    
+    logger.info(f"Batch job cancelled: {job_id}")
+    
+    return {
+        "success": True,
+        "message": f"Batch job {job_id} cancelled successfully"
+    }
+
+async def process_batch_job(job_id: str):
+    """Process a batch job asynchronously"""
+    job = batch_jobs[job_id]
+    
+    try:
+        # Update job status to running
+        job["status"] = JobStatus.RUNNING
+        job["started_at"] = datetime.now().isoformat()
+        
+        # Simulate processing time based on job type and items
+        total_items = job["total_items"]
+        if total_items == 0:
+            total_items = random.randint(10, 50)  # Simulate organization-wide processing
+            job["total_items"] = total_items
+        
+        results = []
+        
+        # Process each item
+        for i in range(total_items):
+            if job["status"] == JobStatus.CANCELLED:
+                break
+                
+            # Simulate processing time
+            await asyncio.sleep(random.uniform(0.1, 0.3))
+            
+            # Simulate processing result
+            item_result = await simulate_prediction(job["job_type"], i)
+            results.append(item_result)
+            
+            # Update progress
+            job["processed_items"] = i + 1
+            
+            # Simulate occasional failures
+            if random.random() < 0.05:  # 5% failure rate
+                job["failed_items"] += 1
+        
+        # Complete the job
+        if job["status"] != JobStatus.CANCELLED:
+            job["status"] = JobStatus.COMPLETED
+            job["completed_at"] = datetime.now().isoformat()
+            job_results[job_id] = {
+                "predictions": results,
+                "metadata": {
+                    "job_type": job["job_type"],
+                    "organization_id": job["organization_id"],
+                    "processing_summary": {
+                        "total_items": total_items,
+                        "successful_items": job["processed_items"] - job["failed_items"],
+                        "failed_items": job["failed_items"]
+                    }
+                }
+            }
+        
+        logger.info(f"Batch job completed: {job_id} - Status: {job['status']}")
+        
+    except Exception as e:
+        job["status"] = JobStatus.FAILED
+        job["completed_at"] = datetime.now().isoformat()
+        logger.error(f"Batch job failed: {job_id} - Error: {str(e)}")
+
+async def simulate_prediction(job_type: str, item_index: int):
+    """Simulate a prediction result for batch processing"""
+    base_result = {
+        "item_id": f"item_{item_index}",
+        "processed_at": datetime.now().isoformat()
+    }
+    
+    if job_type == "profitability":
+        base_result.update({
+            "profitability_score": round(random.uniform(0.3, 0.95), 3),
+            "confidence": round(random.uniform(0.7, 0.95), 3),
+            "risk_level": random.choice(["low", "medium", "high"])
+        })
+    elif job_type == "churn":
+        base_result.update({
+            "churn_probability": round(random.uniform(0.1, 0.8), 3),
+            "risk_level": random.choice(["low", "medium", "high", "critical"]),
+            "confidence": round(random.uniform(0.75, 0.95), 3)
+        })
+    elif job_type == "revenue_leak":
+        base_result.update({
+            "leak_amount": round(random.uniform(1000, 25000), 2),
+            "leak_categories": random.randint(1, 5),
+            "confidence": round(random.uniform(0.8, 0.95), 3)
+        })
+    else:
+        base_result.update({
+            "prediction_value": round(random.uniform(0.1, 1.0), 3),
+            "confidence": round(random.uniform(0.7, 0.9), 3)
+        })
+    
+    return base_result
+
+def calculate_processing_time(job):
+    """Calculate processing time for a job"""
+    if not job["started_at"] or not job["completed_at"]:
+        return None
+    
+    start = datetime.fromisoformat(job["started_at"])
+    end = datetime.fromisoformat(job["completed_at"])
+    duration = (end - start).total_seconds()
+    
+    return f"{duration:.2f} seconds"
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):

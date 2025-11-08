@@ -34,9 +34,11 @@ const integrationRoutes = require('./src/routes/integrations');
 const reportRoutes = require('./src/routes/reports');
 const notificationRoutes = require('./src/routes/notifications');
 const aiHealthRoutes = require('./src/routes/aiHealth');
+const batchRoutes = require('./src/routes/batch');
 
 // Import database connection
 const { connectDatabase } = require('./src/config/database');
+const scheduler = require('./src/services/scheduler');
 
 // Create Express app
 const app = express();
@@ -131,6 +133,7 @@ app.use('/api/integrations', integrationRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/ai', aiHealthRoutes);
+app.use('/api/batch', batchRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -174,6 +177,10 @@ const startServer = async () => {
     // Connect to database
     await connectDatabase();
     logger.info('Database connected successfully');
+
+    // Initialize scheduler service
+    await scheduler.initialize();
+    logger.info('Scheduler service initialized');
 
     // Start server
     app.listen(PORT, () => {

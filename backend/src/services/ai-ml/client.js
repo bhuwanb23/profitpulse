@@ -483,6 +483,88 @@ class AIClient {
   }
 
   /**
+   * Submit batch job
+   * @param {Object} jobData - Batch job data
+   * @param {Object} options - Request options
+   * @returns {Promise<Object>} Batch job submission result
+   */
+  async submitBatchJob(jobData, options = {}) {
+    return this.executeRequest(
+      () => this.client.post('/api/batch/submit', jobData),
+      'batch',
+      'submit',
+      jobData,
+      options
+    );
+  }
+
+  /**
+   * List batch jobs
+   * @param {Object} params - Query parameters
+   * @param {Object} options - Request options
+   * @returns {Promise<Object>} List of batch jobs
+   */
+  async listBatchJobs(params = {}, options = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const url = queryString ? `/api/batch/jobs?${queryString}` : '/api/batch/jobs';
+    return this.executeRequest(
+      () => this.client.get(url),
+      'batch',
+      'list',
+      params,
+      options
+    );
+  }
+
+  /**
+   * Get batch job status
+   * @param {string} jobId - Batch job ID
+   * @param {Object} options - Request options
+   * @returns {Promise<Object>} Batch job status
+   */
+  async getBatchJobStatus(jobId, options = {}) {
+    return this.executeRequest(
+      () => this.client.get(`/api/batch/status/${jobId}`),
+      'batch',
+      'status',
+      { jobId },
+      options
+    );
+  }
+
+  /**
+   * Get batch job results
+   * @param {string} jobId - Batch job ID
+   * @param {Object} options - Request options
+   * @returns {Promise<Object>} Batch job results
+   */
+  async getBatchJobResults(jobId, options = {}) {
+    return this.executeRequest(
+      () => this.client.get(`/api/batch/results/${jobId}`),
+      'batch',
+      'results',
+      { jobId },
+      options
+    );
+  }
+
+  /**
+   * Cancel batch job
+   * @param {string} jobId - Batch job ID
+   * @param {Object} options - Request options
+   * @returns {Promise<Object>} Cancellation result
+   */
+  async cancelBatchJob(jobId, options = {}) {
+    return this.executeRequest(
+      () => this.client.delete(`/api/batch/jobs/${jobId}`),
+      'batch',
+      'cancel',
+      { jobId },
+      options
+    );
+  }
+
+  /**
    * Reset circuit breaker
    */
   resetCircuitBreaker() {
