@@ -97,6 +97,45 @@ class BatchJobRequest(BaseModel):
     priority: str = "normal"
     scheduled_at: Optional[str] = None
 
+# Historical Data Analysis Models
+class HistoricalAnalysisRequest(BaseModel):
+    model_type: str
+    organization_id: str
+    start_date: str
+    end_date: str
+    analysis_type: str = "trend"  # trend, performance, comparison
+    parameters: Dict[str, Any] = {}
+
+class TrendAnalysisRequest(BaseModel):
+    model_type: str
+    organization_id: str
+    time_period: str = "30d"  # 7d, 30d, 90d, 1y
+    metrics: List[str] = []
+    granularity: str = "daily"  # hourly, daily, weekly, monthly
+
+# Model Retraining Models
+class RetrainingTriggerRequest(BaseModel):
+    model_type: str
+    organization_id: str
+    trigger_type: str = "performance"  # performance, schedule, manual
+    threshold_metrics: Dict[str, float] = {}
+    parameters: Dict[str, Any] = {}
+
+class RetrainingJobRequest(BaseModel):
+    model_type: str
+    organization_id: str
+    training_data_range: Dict[str, str]
+    hyperparameters: Dict[str, Any] = {}
+    validation_split: float = 0.2
+
+# Performance Reporting Models
+class PerformanceReportRequest(BaseModel):
+    model_type: Optional[str] = None  # None for all models
+    organization_id: str
+    report_type: str = "summary"  # summary, detailed, comparison
+    time_range: str = "30d"
+    metrics: List[str] = []
+
 class BatchJobResponse(BaseModel):
     job_id: str
     status: JobStatus
@@ -106,6 +145,12 @@ class BatchJobResponse(BaseModel):
 # In-memory job storage (in production, use Redis or database)
 batch_jobs = {}
 job_results = {}
+
+# Historical data and performance tracking storage
+historical_predictions = {}
+model_performance_metrics = {}
+retraining_jobs = {}
+performance_alerts = []
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -158,7 +203,14 @@ async def root():
             "batch_jobs": "/api/batch/jobs",
             "batch_submit": "/api/batch/submit",
             "batch_status": "/api/batch/status/{job_id}",
-            "batch_results": "/api/batch/results/{job_id}"
+            "batch_results": "/api/batch/results/{job_id}",
+            "historical_analysis": "/api/historical/analysis",
+            "trend_analysis": "/api/historical/trends",
+            "performance_report": "/api/performance/report",
+            "model_metrics": "/api/performance/metrics",
+            "retraining_trigger": "/api/retraining/trigger",
+            "retraining_status": "/api/retraining/status",
+            "retraining_jobs": "/api/retraining/jobs"
         }
     }
 
@@ -738,6 +790,372 @@ def calculate_processing_time(job):
     duration = (end - start).total_seconds()
     
     return f"{duration:.2f} seconds"
+
+# Historical Data Analysis Endpoints
+
+@app.post("/api/historical/analysis")
+async def get_historical_analysis(request: HistoricalAnalysisRequest):
+    """Get historical analysis for a specific model"""
+    try:
+        # Simulate historical data analysis
+        analysis_data = generate_historical_analysis(
+            request.model_type,
+            request.organization_id,
+            request.start_date,
+            request.end_date,
+            request.analysis_type
+        )
+        
+        return {
+            "success": True,
+            "data": {
+                "model_type": request.model_type,
+                "organization_id": request.organization_id,
+                "analysis_type": request.analysis_type,
+                "time_range": {
+                    "start_date": request.start_date,
+                    "end_date": request.end_date
+                },
+                "analysis": analysis_data,
+                "generated_at": datetime.now().isoformat()
+            }
+        }
+    except Exception as e:
+        logger.error(f"Historical analysis failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Historical analysis failed: {str(e)}")
+
+@app.post("/api/historical/trends")
+async def get_trend_analysis(request: TrendAnalysisRequest):
+    """Get trend analysis for model performance"""
+    try:
+        trend_data = generate_trend_analysis(
+            request.model_type,
+            request.organization_id,
+            request.time_period,
+            request.metrics,
+            request.granularity
+        )
+        
+        return {
+            "success": True,
+            "data": {
+                "model_type": request.model_type,
+                "organization_id": request.organization_id,
+                "time_period": request.time_period,
+                "granularity": request.granularity,
+                "trends": trend_data,
+                "generated_at": datetime.now().isoformat()
+            }
+        }
+    except Exception as e:
+        logger.error(f"Trend analysis failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Trend analysis failed: {str(e)}")
+
+# Performance Reporting Endpoints
+
+@app.post("/api/performance/report")
+async def get_performance_report(request: PerformanceReportRequest):
+    """Generate comprehensive performance report"""
+    try:
+        report_data = generate_performance_report(
+            request.model_type,
+            request.organization_id,
+            request.report_type,
+            request.time_range,
+            request.metrics
+        )
+        
+        return {
+            "success": True,
+            "data": {
+                "report_type": request.report_type,
+                "organization_id": request.organization_id,
+                "model_type": request.model_type,
+                "time_range": request.time_range,
+                "report": report_data,
+                "generated_at": datetime.now().isoformat()
+            }
+        }
+    except Exception as e:
+        logger.error(f"Performance report generation failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Performance report failed: {str(e)}")
+
+@app.get("/api/performance/metrics")
+async def get_model_metrics(model_type: str = None, organization_id: str = None):
+    """Get real-time model performance metrics"""
+    try:
+        metrics_data = get_current_model_metrics(model_type, organization_id)
+        
+        return {
+            "success": True,
+            "data": {
+                "metrics": metrics_data,
+                "timestamp": datetime.now().isoformat()
+            }
+        }
+    except Exception as e:
+        logger.error(f"Model metrics retrieval failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Metrics retrieval failed: {str(e)}")
+
+# Model Retraining Endpoints
+
+@app.post("/api/retraining/trigger")
+async def trigger_model_retraining(request: RetrainingTriggerRequest):
+    """Trigger model retraining based on performance thresholds"""
+    try:
+        retraining_job_id = str(uuid.uuid4())
+        
+        # Create retraining job
+        retraining_job = {
+            "job_id": retraining_job_id,
+            "model_type": request.model_type,
+            "organization_id": request.organization_id,
+            "trigger_type": request.trigger_type,
+            "status": "pending",
+            "created_at": datetime.now().isoformat(),
+            "started_at": None,
+            "completed_at": None,
+            "progress": 0,
+            "threshold_metrics": request.threshold_metrics,
+            "parameters": request.parameters
+        }
+        
+        retraining_jobs[retraining_job_id] = retraining_job
+        
+        # Start retraining process asynchronously
+        asyncio.create_task(process_retraining_job(retraining_job_id))
+        
+        logger.info(f"Retraining job triggered: {retraining_job_id} for model {request.model_type}")
+        
+        return {
+            "success": True,
+            "data": {
+                "job_id": retraining_job_id,
+                "model_type": request.model_type,
+                "trigger_type": request.trigger_type,
+                "status": "pending",
+                "message": "Model retraining job triggered successfully"
+            }
+        }
+    except Exception as e:
+        logger.error(f"Retraining trigger failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Retraining trigger failed: {str(e)}")
+
+@app.get("/api/retraining/status/{job_id}")
+async def get_retraining_status(job_id: str):
+    """Get status of a retraining job"""
+    if job_id not in retraining_jobs:
+        raise HTTPException(status_code=404, detail="Retraining job not found")
+    
+    job = retraining_jobs[job_id]
+    
+    return {
+        "success": True,
+        "data": {
+            "job_id": job_id,
+            "model_type": job["model_type"],
+            "status": job["status"],
+            "progress": job["progress"],
+            "created_at": job["created_at"],
+            "started_at": job["started_at"],
+            "completed_at": job["completed_at"]
+        }
+    }
+
+@app.get("/api/retraining/jobs")
+async def list_retraining_jobs(model_type: str = None, organization_id: str = None):
+    """List retraining jobs with optional filtering"""
+    jobs = list(retraining_jobs.values())
+    
+    if model_type:
+        jobs = [job for job in jobs if job["model_type"] == model_type]
+    
+    if organization_id:
+        jobs = [job for job in jobs if job["organization_id"] == organization_id]
+    
+    # Sort by created_at (newest first)
+    jobs.sort(key=lambda x: x["created_at"], reverse=True)
+    
+    return {
+        "success": True,
+        "data": {
+            "jobs": jobs,
+            "total_count": len(jobs)
+        }
+    }
+
+# Helper functions for generating simulated data
+
+def generate_historical_analysis(model_type, organization_id, start_date, end_date, analysis_type):
+    """Generate simulated historical analysis data"""
+    if analysis_type == "trend":
+        return {
+            "accuracy_trend": [
+                {"date": "2024-01-01", "accuracy": 0.85},
+                {"date": "2024-01-15", "accuracy": 0.87},
+                {"date": "2024-02-01", "accuracy": 0.89},
+                {"date": "2024-02-15", "accuracy": 0.91},
+                {"date": "2024-03-01", "accuracy": 0.88}
+            ],
+            "prediction_volume": [
+                {"date": "2024-01-01", "volume": 1250},
+                {"date": "2024-01-15", "volume": 1380},
+                {"date": "2024-02-01", "volume": 1420},
+                {"date": "2024-02-15", "volume": 1567},
+                {"date": "2024-03-01", "volume": 1689}
+            ],
+            "confidence_distribution": {
+                "high": 0.65,
+                "medium": 0.28,
+                "low": 0.07
+            }
+        }
+    elif analysis_type == "performance":
+        return {
+            "overall_accuracy": 0.891,
+            "precision": 0.876,
+            "recall": 0.903,
+            "f1_score": 0.889,
+            "prediction_latency_ms": 145.6,
+            "throughput_per_second": 23.4,
+            "error_rate": 0.109
+        }
+    else:
+        return {
+            "comparison_metrics": {
+                "current_period": {"accuracy": 0.891, "volume": 5678},
+                "previous_period": {"accuracy": 0.867, "volume": 5234},
+                "improvement": {"accuracy": 0.024, "volume": 444}
+            }
+        }
+
+def generate_trend_analysis(model_type, organization_id, time_period, metrics, granularity):
+    """Generate simulated trend analysis data"""
+    return {
+        "accuracy_trend": {
+            "direction": "improving",
+            "slope": 0.012,
+            "r_squared": 0.89,
+            "data_points": 30
+        },
+        "volume_trend": {
+            "direction": "increasing",
+            "slope": 15.6,
+            "r_squared": 0.94,
+            "data_points": 30
+        },
+        "latency_trend": {
+            "direction": "stable",
+            "slope": -0.2,
+            "r_squared": 0.23,
+            "data_points": 30
+        },
+        "seasonal_patterns": {
+            "weekly_pattern": "Higher volume on weekdays",
+            "monthly_pattern": "Peak at month-end",
+            "confidence": 0.87
+        }
+    }
+
+def generate_performance_report(model_type, organization_id, report_type, time_range, metrics):
+    """Generate simulated performance report"""
+    return {
+        "executive_summary": {
+            "overall_health": "excellent",
+            "key_metrics": {
+                "accuracy": 0.891,
+                "uptime": 0.997,
+                "avg_response_time": 145.6,
+                "predictions_served": 15678
+            },
+            "recommendations": [
+                "Continue current optimization strategies",
+                "Consider expanding to additional use cases",
+                "Monitor seasonal performance patterns"
+            ]
+        },
+        "detailed_metrics": {
+            "accuracy_by_category": {
+                "high_value_clients": 0.923,
+                "medium_value_clients": 0.887,
+                "low_value_clients": 0.856
+            },
+            "performance_over_time": [
+                {"period": "Week 1", "accuracy": 0.885, "volume": 1234},
+                {"period": "Week 2", "accuracy": 0.891, "volume": 1456},
+                {"period": "Week 3", "accuracy": 0.897, "volume": 1567},
+                {"period": "Week 4", "accuracy": 0.893, "volume": 1421}
+            ]
+        },
+        "alerts_and_issues": [
+            {
+                "severity": "low",
+                "message": "Slight accuracy dip on weekend predictions",
+                "recommendation": "Review weekend data quality"
+            }
+        ]
+    }
+
+def get_current_model_metrics(model_type, organization_id):
+    """Get current model performance metrics"""
+    return {
+        "profitability": {
+            "accuracy": 0.891,
+            "predictions_today": 234,
+            "avg_confidence": 0.87,
+            "last_updated": datetime.now().isoformat()
+        },
+        "churn": {
+            "accuracy": 0.876,
+            "predictions_today": 156,
+            "avg_confidence": 0.82,
+            "last_updated": datetime.now().isoformat()
+        },
+        "revenue_leak": {
+            "accuracy": 0.923,
+            "predictions_today": 89,
+            "avg_confidence": 0.91,
+            "last_updated": datetime.now().isoformat()
+        }
+    }
+
+async def process_retraining_job(job_id: str):
+    """Process a retraining job asynchronously"""
+    job = retraining_jobs[job_id]
+    
+    try:
+        # Update job status to running
+        job["status"] = "running"
+        job["started_at"] = datetime.now().isoformat()
+        
+        # Simulate retraining process
+        for progress in range(0, 101, 10):
+            if job["status"] == "cancelled":
+                break
+                
+            job["progress"] = progress
+            await asyncio.sleep(random.uniform(0.5, 1.0))  # Simulate processing time
+        
+        # Complete the job
+        if job["status"] != "cancelled":
+            job["status"] = "completed"
+            job["completed_at"] = datetime.now().isoformat()
+            job["progress"] = 100
+            
+            # Update model performance metrics
+            model_performance_metrics[f"{job['model_type']}_{job['organization_id']}"] = {
+                "accuracy": round(random.uniform(0.88, 0.95), 3),
+                "retrained_at": datetime.now().isoformat(),
+                "training_samples": random.randint(5000, 15000),
+                "validation_accuracy": round(random.uniform(0.85, 0.92), 3)
+            }
+        
+        logger.info(f"Retraining job completed: {job_id}")
+        
+    except Exception as e:
+        job["status"] = "failed"
+        job["completed_at"] = datetime.now().isoformat()
+        logger.error(f"Retraining job failed: {job_id} - Error: {str(e)}")
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):

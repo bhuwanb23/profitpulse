@@ -565,6 +565,122 @@ class AIClient {
   }
 
   /**
+   * Get historical analysis
+   * @param {Object} data - Historical analysis request data
+   * @param {Object} options - Request options
+   * @returns {Promise<Object>} Historical analysis result
+   */
+  async getHistoricalAnalysis(data, options = {}) {
+    return this.executeRequest(
+      () => this.client.post('/api/historical/analysis', data),
+      'historical',
+      'analysis',
+      data,
+      options
+    );
+  }
+
+  /**
+   * Get trend analysis
+   * @param {Object} data - Trend analysis request data
+   * @param {Object} options - Request options
+   * @returns {Promise<Object>} Trend analysis result
+   */
+  async getTrendAnalysis(data, options = {}) {
+    return this.executeRequest(
+      () => this.client.post('/api/historical/trends', data),
+      'historical',
+      'trends',
+      data,
+      options
+    );
+  }
+
+  /**
+   * Get performance report
+   * @param {Object} data - Performance report request data
+   * @param {Object} options - Request options
+   * @returns {Promise<Object>} Performance report result
+   */
+  async getPerformanceReport(data, options = {}) {
+    return this.executeRequest(
+      () => this.client.post('/api/performance/report', data),
+      'performance',
+      'report',
+      data,
+      options
+    );
+  }
+
+  /**
+   * Get model metrics
+   * @param {Object} params - Query parameters
+   * @param {Object} options - Request options
+   * @returns {Promise<Object>} Model metrics
+   */
+  async getModelMetrics(params = {}, options = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const url = queryString ? `/api/performance/metrics?${queryString}` : '/api/performance/metrics';
+    return this.executeRequest(
+      () => this.client.get(url),
+      'performance',
+      'metrics',
+      params,
+      options
+    );
+  }
+
+  /**
+   * Trigger model retraining
+   * @param {Object} data - Retraining trigger request data
+   * @param {Object} options - Request options
+   * @returns {Promise<Object>} Retraining trigger result
+   */
+  async triggerRetraining(data, options = {}) {
+    return this.executeRequest(
+      () => this.client.post('/api/retraining/trigger', data),
+      'retraining',
+      'trigger',
+      data,
+      options
+    );
+  }
+
+  /**
+   * Get retraining status
+   * @param {string} jobId - Retraining job ID
+   * @param {Object} options - Request options
+   * @returns {Promise<Object>} Retraining status
+   */
+  async getRetrainingStatus(jobId, options = {}) {
+    return this.executeRequest(
+      () => this.client.get(`/api/retraining/status/${jobId}`),
+      'retraining',
+      'status',
+      { jobId },
+      options
+    );
+  }
+
+  /**
+   * List retraining jobs
+   * @param {Object} params - Query parameters
+   * @param {Object} options - Request options
+   * @returns {Promise<Object>} List of retraining jobs
+   */
+  async listRetrainingJobs(params = {}, options = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const url = queryString ? `/api/retraining/jobs?${queryString}` : '/api/retraining/jobs';
+    return this.executeRequest(
+      () => this.client.get(url),
+      'retraining',
+      'list',
+      params,
+      options
+    );
+  }
+
+  /**
    * Reset circuit breaker
    */
   resetCircuitBreaker() {
