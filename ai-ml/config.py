@@ -30,6 +30,8 @@ class DatabaseConfig(BaseSettings):
     
     class Config:
         env_file = ".env"
+        extra = "ignore"  # Ignore extra fields from environment
+        extra = "ignore"  # Ignore extra fields from environment
 
 
 class BackendAPIConfig(BaseSettings):
@@ -40,6 +42,8 @@ class BackendAPIConfig(BaseSettings):
     
     class Config:
         env_file = ".env"
+        extra = "ignore"  # Ignore extra fields from environment
+        extra = "ignore"  # Ignore extra fields from environment
 
 
 class SuperOpsConfig(BaseSettings):
@@ -51,6 +55,7 @@ class SuperOpsConfig(BaseSettings):
     
     class Config:
         env_file = ".env"
+        extra = "ignore"  # Ignore extra fields from environment
 
 
 class SuperOpsAPIConfig(BaseSettings):
@@ -64,6 +69,7 @@ class SuperOpsAPIConfig(BaseSettings):
     
     class Config:
         env_file = ".env"
+        extra = "ignore"  # Ignore extra fields from environment
 
 
 class QuickBooksConfig(BaseSettings):
@@ -84,16 +90,18 @@ class QuickBooksConfig(BaseSettings):
     
     class Config:
         env_file = ".env"
+        extra = "ignore"  # Ignore extra fields from environment
 
 
 class MLflowConfig(BaseSettings):
     """MLflow configuration"""
-    tracking_uri: str = Field(default="http://localhost:5000", env="MLFLOW_TRACKING_URI")
+    tracking_uri: str = Field(default=f"sqlite:///{MLRUNS_DIR}/mlflow.db", env="MLFLOW_TRACKING_URI")
     experiment_name: str = Field(default="superhack_ai_models", env="MLFLOW_EXPERIMENT_NAME")
     artifact_root: str = Field(default=str(MLRUNS_DIR), env="MLFLOW_ARTIFACT_ROOT")
     
     class Config:
         env_file = ".env"
+        extra = "ignore"  # Ignore extra fields from environment
 
 
 class WandBConfig(BaseSettings):
@@ -104,6 +112,7 @@ class WandBConfig(BaseSettings):
     
     class Config:
         env_file = ".env"
+        extra = "ignore"  # Ignore extra fields from environment
 
 
 class ModelServerConfig(BaseSettings):
@@ -115,6 +124,7 @@ class ModelServerConfig(BaseSettings):
     
     class Config:
         env_file = ".env"
+        extra = "ignore"  # Ignore extra fields from environment
 
 
 class RedisConfig(BaseSettings):
@@ -124,6 +134,7 @@ class RedisConfig(BaseSettings):
     
     class Config:
         env_file = ".env"
+        extra = "ignore"  # Ignore extra fields from environment
 
 
 class CeleryConfig(BaseSettings):
@@ -133,6 +144,7 @@ class CeleryConfig(BaseSettings):
     
     class Config:
         env_file = ".env"
+        extra = "ignore"  # Ignore extra fields from environment
 
 
 class LoggingConfig(BaseSettings):
@@ -144,6 +156,7 @@ class LoggingConfig(BaseSettings):
     
     class Config:
         env_file = ".env"
+        extra = "ignore"  # Ignore extra fields from environment
 
 
 class SecurityConfig(BaseSettings):
@@ -154,6 +167,7 @@ class SecurityConfig(BaseSettings):
     
     class Config:
         env_file = ".env"
+        extra = "ignore"  # Ignore extra fields from environment
 
 
 class FeatureStoreConfig(BaseSettings):
@@ -163,6 +177,7 @@ class FeatureStoreConfig(BaseSettings):
     
     class Config:
         env_file = ".env"
+        extra = "ignore"  # Ignore extra fields from environment
 
 
 class ModelConfig(BaseSettings):
@@ -173,6 +188,7 @@ class ModelConfig(BaseSettings):
     
     class Config:
         env_file = ".env"
+        extra = "ignore"  # Ignore extra fields from environment
 
 
 class DataProcessingConfig(BaseSettings):
@@ -183,6 +199,7 @@ class DataProcessingConfig(BaseSettings):
     
     class Config:
         env_file = ".env"
+        extra = "ignore"  # Ignore extra fields from environment
 
 
 class MonitoringConfig(BaseSettings):
@@ -193,6 +210,7 @@ class MonitoringConfig(BaseSettings):
     
     class Config:
         env_file = ".env"
+        extra = "ignore"  # Ignore extra fields from environment
 
 
 class Settings(BaseSettings):
@@ -222,7 +240,9 @@ class Settings(BaseSettings):
     
     class Config:
         env_file = ".env"
+        extra = "ignore"  # Ignore extra fields from environment
         case_sensitive = False
+        extra = "ignore"  # Ignore extra fields from environment
 
 
 # Global settings instance
