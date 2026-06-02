@@ -13,7 +13,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent))
 
 from data.ingestion import extract_data
-from data.preprocessing import preprocess_data
+from data.pipeline import preprocess_data
 
 # Set up logging
 logging.basicConfig(

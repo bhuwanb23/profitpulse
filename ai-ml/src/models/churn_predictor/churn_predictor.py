@@ -4,11 +4,12 @@ Coordinates all components of the churn prediction system
 """
 
 import logging
-import numpy as np
-import pandas as pd
+import warnings
+from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime, timedelta
 import asyncio
+import pandas as pd
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -39,14 +40,15 @@ logger = logging.getLogger(__name__)
 class ChurnPredictor:
     """Main orchestrator for client churn prediction system"""
     
-    def __init__(self, db_path: str = "../../database/superhack.db"):
+    def __init__(self, db_path: Optional[str] = None):
         """
-        Initialize churn predictor
+        Initialize the Churn Predictor
         
         Args:
             db_path: Path to database
         """
-        self.db_path = db_path
+        self.logger = logging.getLogger(f"{__name__}.ChurnPredictor")
+        self.db_path = db_path or str(Path(__file__).resolve().parent.parent.parent.parent / "database" / "superhack.db")
         self.is_trained = False
         self.models = {}
         self.feature_columns = []

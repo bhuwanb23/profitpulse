@@ -4,8 +4,8 @@ Orchestrates all components of the revenue leak detection system
 """
 
 import logging
-import numpy as np
-import pandas as pd
+import warnings
+from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple, Union
 from datetime import datetime, timedelta
 import warnings
@@ -39,14 +39,15 @@ logger = logging.getLogger(__name__)
 class RevenueLeakPredictor:
     """Main orchestrator for revenue leak detection"""
     
-    def __init__(self, db_path: str = "../../database/superhack.db"):
+    def __init__(self, db_path: Optional[str] = None):
         """
-        Initialize the revenue leak predictor
+        Initialize the Revenue Leak Predictor
         
         Args:
             db_path: Path to database
         """
-        self.db_path = db_path
+        self.logger = logging.getLogger(f"{__name__}.RevenueLeakPredictor")
+        self.db_path = db_path or str(Path(__file__).resolve().parent.parent.parent.parent / "database" / "superhack.db")
         self.data_preparator = None
         self.anomaly_models = {}
         self.training_pipeline = None

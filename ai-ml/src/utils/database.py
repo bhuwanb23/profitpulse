@@ -258,10 +258,15 @@ class DatabaseManager:
     def update_scheduled_run(self, run_id: str, update_data: Dict[str, Any]) -> bool:
         """Update a scheduled run"""
         try:
+            ALLOWED_COLUMNS = {"model_name", "schedule", "enabled", "parameters", "last_run", "next_run"}
+            filtered = {k: v for k, v in update_data.items() if k in ALLOWED_COLUMNS}
+            if not filtered:
+                logger.warning(f"No valid columns to update for scheduled run: {run_id}")
+                return False
             with sqlite3.connect(self.db_path) as conn:
                 # Build dynamic update query
-                set_clause = ", ".join([f"{key} = ?" for key in update_data.keys()])
-                values = list(update_data.values()) + [run_id]
+                set_clause = ", ".join([f"{key} = ?" for key in filtered.keys()])
+                values = list(filtered.values())
                 
                 conn.execute(f"""
                     UPDATE scheduled_runs 
@@ -509,10 +514,15 @@ class DatabaseManager:
         """Update a retraining trigger"""
         try:
             from datetime import datetime
+            ALLOWED_COLUMNS = {"model_name", "trigger_type", "trigger_condition", "enabled"}
+            filtered = {k: v for k, v in update_data.items() if k in ALLOWED_COLUMNS}
+            if not filtered:
+                logger.warning(f"No valid columns to update for retraining trigger: {trigger_id}")
+                return False
             with sqlite3.connect(self.db_path) as conn:
                 # Build dynamic update query
-                set_clause = ", ".join([f"{key} = ?" for key in update_data.keys()])
-                values = list(update_data.values()) + [trigger_id]
+                set_clause = ", ".join([f"{key} = ?" for key in filtered.keys()])
+                values = list(filtered.values())
                 
                 conn.execute(f"""
                     UPDATE retraining_triggers 
@@ -581,10 +591,15 @@ class DatabaseManager:
         """Update a retraining job"""
         try:
             from datetime import datetime
+            ALLOWED_COLUMNS = {"status", "triggered_by", "trigger_type", "parameters", "started_at", "completed_at", "error_message", "model_version_before", "model_version_after"}
+            filtered = {k: v for k, v in update_data.items() if k in ALLOWED_COLUMNS}
+            if not filtered:
+                logger.warning(f"No valid columns to update for retraining job: {job_id}")
+                return False
             with sqlite3.connect(self.db_path) as conn:
                 # Build dynamic update query
-                set_clause = ", ".join([f"{key} = ?" for key in update_data.keys()])
-                values = list(update_data.values()) + [job_id]
+                set_clause = ", ".join([f"{key} = ?" for key in filtered.keys()])
+                values = list(filtered.values())
                 
                 conn.execute(f"""
                     UPDATE retraining_jobs 

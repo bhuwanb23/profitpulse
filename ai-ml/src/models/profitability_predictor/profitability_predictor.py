@@ -4,13 +4,14 @@ Handles model loading, inference, and prediction serving for client profitabilit
 """
 
 import logging
-import numpy as np
-import pandas as pd
+import warnings
+from pathlib import Path
 from typing import Dict, Any, Optional, List, Union
 from datetime import datetime
 import json
 import pickle
 import os
+import pandas as pd
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -56,16 +57,17 @@ logger = logging.getLogger(__name__)
 class ProfitabilityPredictor:
     """Handles real-time profitability predictions"""
     
-    def __init__(self, model_path: str = "./models", db_path: str = "../../database/superhack.db"):
+    def __init__(self, model_path: str = "./models", db_path: Optional[str] = None):
         """
-        Initialize the profitability predictor
+        Initialize the Profitability Predictor
         
         Args:
-            model_path: Path to saved models
+            model_path: Path to model directory
             db_path: Path to database
         """
+        self.logger = logging.getLogger(f"{__name__}.ProfitabilityPredictor")
         self.model_path = model_path
-        self.db_path = db_path
+        self.db_path = db_path or str(Path(__file__).resolve().parent.parent.parent.parent / "database" / "superhack.db")
         self.xgboost_model = None
         self.random_forest_model = None
         if FEATURE_ENGINEER_AVAILABLE and ProfitabilityFeatureEngineer is not None:

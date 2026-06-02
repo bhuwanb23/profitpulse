@@ -7,6 +7,7 @@ import logging
 import numpy as np
 import pandas as pd
 import os
+from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime, timedelta
 import warnings
@@ -31,14 +32,14 @@ logger = logging.getLogger(__name__)
 class ChurnDataPreparator:
     """Prepares data for client churn prediction"""
     
-    def __init__(self, db_path: str = "../../database/superhack.db"):
+    def __init__(self, db_path: Optional[str] = None):
         """
         Initialize the data preparator
         
         Args:
             db_path: Path to database
         """
-        self.db_path = db_path
+        self.db_path = db_path or str(Path(__file__).resolve().parent.parent.parent.parent / "database" / "superhack.db")
         # Initialize clients as None, they will be initialized when needed
         self.quickbooks_client = None
         self.superops_client = None

@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import sqlite3
 import logging
+from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Any
 from datetime import datetime, timedelta
 
@@ -16,14 +17,14 @@ logger = logging.getLogger(__name__)
 class HistoricalDataCollector:
     """Collects historical financial data from all sources"""
     
-    def __init__(self, db_path: str = "../../database/superhack.db"):
+    def __init__(self, db_path: Optional[str] = None):
         """
         Initialize the data collector
         
         Args:
             db_path: Path to the SQLite database
         """
-        self.db_path = db_path
+        self.db_path = db_path or str(Path(__file__).resolve().parent.parent.parent.parent / "database" / "superhack.db")
         
     def collect_client_data(self) -> pd.DataFrame:
         """
@@ -196,7 +197,7 @@ class HistoricalDataCollector:
 
 
 # Convenience function for easy usage
-def collect_historical_financial_data(db_path: str = "../../database/superhack.db") -> pd.DataFrame:
+def collect_historical_financial_data(db_path: Optional[str] = None) -> pd.DataFrame:
     """
     Collect and aggregate historical financial data
     
@@ -206,5 +207,6 @@ def collect_historical_financial_data(db_path: str = "../../database/superhack.d
     Returns:
         DataFrame with aggregated financial metrics per client
     """
-    collector = HistoricalDataCollector(db_path)
+    resolved = db_path or str(Path(__file__).resolve().parent.parent.parent.parent / "database" / "superhack.db")
+    collector = HistoricalDataCollector(resolved)
     return collector.aggregate_financial_metrics()

@@ -9,6 +9,7 @@ import logging
 from typing import Dict, List, Tuple, Optional, Any
 from datetime import datetime
 import os
+from pathlib import Path
 
 # Import our modules
 from src.models.profitability_predictor.historical_data_collector import HistoricalDataCollector
@@ -27,16 +28,17 @@ logger = logging.getLogger(__name__)
 class ProfitabilityTrainingPipeline:
     """End-to-end training pipeline for profitability prediction models"""
     
-    def __init__(self, db_path: str = "../../database/superhack.db"):
+    def __init__(self, db_path: Optional[str] = None):
         """
         Initialize the training pipeline
         
         Args:
             db_path: Path to the SQLite database
         """
-        self.db_path = db_path
-        self.data_collector = HistoricalDataCollector(db_path)
-        self.feature_engineer = ProfitabilityFeatureEngineer(db_path)
+        resolved = db_path or str(Path(__file__).resolve().parent.parent.parent.parent / "database" / "superhack.db")
+        self.db_path = resolved
+        self.data_collector = HistoricalDataCollector(resolved)
+        self.feature_engineer = ProfitabilityFeatureEngineer(resolved)
         self.data_splitter = ProfitabilityDataSplitter()
         self.data_assessor = ProfitabilityDataQualityAssessor()
         self.xgboost_model = None
@@ -375,7 +377,7 @@ class ProfitabilityTrainingPipeline:
 
 
 # Convenience function for easy usage
-def run_profitability_training_pipeline(db_path: str = "../../database/superhack.db",
+def run_profitability_training_pipeline(db_path: Optional[str] = None,
                                       save_models: bool = True,
                                       output_dir: str = "./trained_models") -> Dict[str, Any]:
     """
@@ -389,5 +391,6 @@ def run_profitability_training_pipeline(db_path: str = "../../database/superhack
     Returns:
         Dictionary with complete pipeline results
     """
-    pipeline = ProfitabilityTrainingPipeline(db_path)
+    resolved = db_path or str(Path(__file__).resolve().parent.parent.parent.parent / "database" / "superhack.db")
+    pipeline = ProfitabilityTrainingPipeline(resolved)
     return pipeline.run_complete_pipeline(save_models, output_dir)

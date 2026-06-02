@@ -6,6 +6,7 @@ Creates advanced features from financial and operational data
 import pandas as pd
 import numpy as np
 import logging
+from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Any
 from datetime import datetime, timedelta
 
@@ -17,15 +18,16 @@ logger = logging.getLogger(__name__)
 class ProfitabilityFeatureEngineer:
     """Engineers features for client profitability prediction models"""
     
-    def __init__(self, db_path: str = "../../database/superhack.db"):
+    def __init__(self, db_path: Optional[str] = None):
         """
         Initialize the feature engineer
         
         Args:
             db_path: Path to the SQLite database
         """
-        self.db_path = db_path
-        self.data_collector = HistoricalDataCollector(db_path)
+        resolved = db_path or str(Path(__file__).resolve().parent.parent.parent.parent / "database" / "superhack.db")
+        self.db_path = resolved
+        self.data_collector = HistoricalDataCollector(resolved)
         
     def create_financial_features(self, financial_data: pd.DataFrame) -> pd.DataFrame:
         """
@@ -281,7 +283,7 @@ class ProfitabilityFeatureEngineer:
 
 
 # Convenience function for easy usage
-def engineer_profitability_features(financial_data: pd.DataFrame, db_path: str = "../../database/superhack.db") -> pd.DataFrame:
+def engineer_profitability_features(financial_data: pd.DataFrame, db_path: Optional[str] = None) -> pd.DataFrame:
     """
     Engineer features for client profitability prediction
     
@@ -292,5 +294,6 @@ def engineer_profitability_features(financial_data: pd.DataFrame, db_path: str =
     Returns:
         DataFrame with engineered features
     """
-    engineer = ProfitabilityFeatureEngineer(db_path)
+    resolved = db_path or str(Path(__file__).resolve().parent.parent.parent.parent / "database" / "superhack.db")
+    engineer = ProfitabilityFeatureEngineer(resolved)
     return engineer.engineer_features(financial_data)
