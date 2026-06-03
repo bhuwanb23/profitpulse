@@ -15,9 +15,7 @@ from ..models.schemas import (
     BatchPredictionRequest,
     BatchPredictionResponse
 )
-from ..dependencies import get_predictor
 from ...models.profitability_predictor.profitability_predictor import ProfitabilityPredictor
-from ...utils.predictor import Predictor
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

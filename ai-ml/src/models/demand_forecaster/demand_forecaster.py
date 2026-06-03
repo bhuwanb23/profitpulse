@@ -49,26 +49,26 @@ class DemandForecaster:
     def _initialize_components(self):
         """Initialize all engine components"""
         try:
-            # Data preparation
+            # Data preparation (lazy — populated via initialize_data_preparator)
             self.data_preparator = None
             
             # Forecasting models
-            self.lstm_forecaster = None
-            self.arima_forecaster = None
-            self.prophet_forecaster = None
-            self.seasonal_decomposer = None
+            self.lstm_forecaster = get_lstm_forecaster()
+            self.arima_forecaster = get_arima_forecaster()
+            self.prophet_forecaster = get_prophet_forecaster()
+            self.seasonal_decomposer = get_seasonal_decomposer()
             
             # Demand prediction
-            self.ensemble_forecaster = None
-            self.resource_planner = None
-            self.capacity_planner = None
-            self.seasonal_adjuster = None
-            self.uncertainty_quantifier = None
+            self.ensemble_forecaster = get_ensemble_forecaster()
+            self.resource_planner = get_resource_planner()
+            self.capacity_planner = get_capacity_planner()
+            self.seasonal_adjuster = get_seasonal_adjuster()
+            self.uncertainty_quantifier = get_uncertainty_quantifier()
             
             # Monitoring
-            self.forecast_monitor = None
-            self.drift_detector = None
-            self.alert_system = None
+            self.forecast_monitor = get_forecast_monitor()
+            self.drift_detector = get_model_drift_detector()
+            self.alert_system = get_alert_system()
             
             logger.info("Demand Forecaster components initialized")
             

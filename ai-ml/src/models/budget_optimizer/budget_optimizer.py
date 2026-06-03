@@ -48,25 +48,25 @@ class BudgetOptimizer:
     def _initialize_components(self):
         """Initialize all engine components"""
         try:
-            # Data preparation
+            # Data preparation (lazy — populated via initialize_data_preparator)
             self.data_preparator = None
             
             # Optimization algorithms
-            self.lp_optimizer = None
-            self.ga_optimizer = None
-            self.sa_optimizer = None
-            self.pso_optimizer = None
-            self.mo_optimizer = None
+            self.lp_optimizer = get_linear_programming_optimizer()
+            self.ga_optimizer = get_genetic_algorithm_optimizer()
+            self.sa_optimizer = get_simulated_annealing_optimizer()
+            self.pso_optimizer = get_particle_swarm_optimizer()
+            self.mo_optimizer = get_multi_objective_optimizer()
             
             # Budget allocation
-            self.budget_allocator = None
-            self.resource_reallocator = None
-            self.efficiency_estimator = None
+            self.budget_allocator = get_budget_allocator()
+            self.resource_reallocator = get_resource_reallocator()
+            self.efficiency_estimator = get_efficiency_gain_estimator()
             
             # Performance tracking
-            self.performance_tracker = None
-            self.roi_strategy = None
-            self.benchmarking = None
+            self.performance_tracker = get_budget_performance_tracker()
+            self.roi_strategy = get_roi_maximization_strategy()
+            self.benchmarking = get_budget_benchmarking()
             
             logger.info("Budget Optimizer components initialized")
             

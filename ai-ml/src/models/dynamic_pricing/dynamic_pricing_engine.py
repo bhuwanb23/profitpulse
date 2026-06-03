@@ -51,28 +51,28 @@ class DynamicPricingEngine:
     def _initialize_components(self):
         """Initialize all engine components"""
         try:
-            # Data preparation
+            # Data preparation (lazy — populated via initialize_data_preparator)
             self.data_preparator = None
             
-            # Reinforcement learning agents
+            # Reinforcement learning agents (price_points-dependent; kept lazy)
             self.q_learning_agent = None
             self.multi_armed_bandit_agent = None
-            self.reward_function = None
+            self.reward_function = get_pricing_reward_function()
             
             # Pricing optimization
-            self.price_recommendation_engine = None
-            self.roi_calculator = None
-            self.market_sensitivity_analyzer = None
+            self.price_recommendation_engine = get_price_recommendation_engine()
+            self.roi_calculator = get_roi_calculator()
+            self.market_sensitivity_analyzer = get_market_sensitivity_analyzer()
             
             # Market analysis
-            self.market_trend_analyzer = None
-            self.competitive_intelligence_analyzer = None
-            self.demand_forecast_analyzer = None
+            self.market_trend_analyzer = get_market_trend_analyzer()
+            self.competitive_intelligence_analyzer = get_competitive_intelligence_analyzer()
+            self.demand_forecast_analyzer = get_demand_forecast_analyzer()
             
             # Pricing prediction and validation
-            self.client_acceptance_predictor = None
-            self.pricing_strategy_validator = None
-            self.pricing_performance_monitor = None
+            self.client_acceptance_predictor = get_client_acceptance_predictor()
+            self.pricing_strategy_validator = get_pricing_strategy_validator()
+            self.pricing_performance_monitor = get_pricing_performance_monitor()
             
             logger.info("Dynamic Pricing Engine components initialized")
             
