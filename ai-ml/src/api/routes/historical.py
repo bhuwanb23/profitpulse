@@ -13,7 +13,6 @@ from ..models.schemas import (
     ModelPerformanceReport,
     PerformanceMetrics
 )
-from ..dependencies import get_predictor
 from ...utils.database import DatabaseManager
 
 logger = logging.getLogger(__name__)

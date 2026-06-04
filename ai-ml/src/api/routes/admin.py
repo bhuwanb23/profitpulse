@@ -9,7 +9,6 @@ from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from pydantic import BaseModel, Field
 
-from ..dependencies import get_model_registry, get_metrics_collector
 from ...utils.admin import AdminService
 
 logger = logging.getLogger(__name__)

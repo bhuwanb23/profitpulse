@@ -11,7 +11,6 @@ from typing import List, Dict, Any, Optional, Union
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from pydantic import BaseModel, Field
 
-from ..dependencies import get_model_registry, get_metrics_collector
 from ...models.churn_predictor.churn_predictor import ChurnPredictor
 from ...models.revenue_leak_detector.revenue_leak_predictor import RevenueLeakPredictor
 from ...models.dynamic_pricing.dynamic_pricing_engine import DynamicPricingEngine

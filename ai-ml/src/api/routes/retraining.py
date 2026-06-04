@@ -12,7 +12,6 @@ import json
 from ..models.schemas import (
     PredictionRequest
 )
-from ..dependencies import get_predictor
 from ...utils.database import DatabaseManager
 
 logger = logging.getLogger(__name__)

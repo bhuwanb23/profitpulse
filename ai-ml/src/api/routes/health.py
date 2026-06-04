@@ -9,7 +9,6 @@ from typing import Dict, Any
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from ..dependencies import get_model_registry, get_metrics_collector
 from ...utils.health_checker import HealthChecker
 
 logger = logging.getLogger(__name__)

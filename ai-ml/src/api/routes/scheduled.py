@@ -15,9 +15,7 @@ from ..models.schemas import (
     ScheduledRunRequest,
     ScheduledRunResponse
 )
-from ..dependencies import get_predictor
 from ...utils.database import DatabaseManager
-from ...utils.predictor import Predictor
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
