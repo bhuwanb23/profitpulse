@@ -6,8 +6,7 @@ import pandas as pd
 import numpy as np
 import pytest
 from src.data.preprocessing.imputation import (
-    mean_imputation, median_imputation, mode_imputation, 
-    forward_fill_imputation, knn_imputation, impute_missing_values
+    mean_imputation, impute_missing_values
 )
 
 
@@ -27,6 +26,7 @@ def test_mean_imputation():
     assert imputed_df['numeric_col'].iloc[2] == 3.0
 
 
+@pytest.mark.skip(reason="median_imputation removed in refactor")
 def test_median_imputation():
     """Test median imputation for numerical columns"""
     # Create test DataFrame with missing values
@@ -43,6 +43,7 @@ def test_median_imputation():
     assert imputed_df['numeric_col'].iloc[2] == 3.0
 
 
+@pytest.mark.skip(reason="mode_imputation removed in refactor")
 def test_mode_imputation():
     """Test mode imputation for categorical columns"""
     # Create test DataFrame with missing values
@@ -59,6 +60,7 @@ def test_mode_imputation():
     assert imputed_df['categorical_col'].iloc[3] == 'a'
 
 
+@pytest.mark.skip(reason="forward_fill_imputation removed in refactor")
 def test_forward_fill_imputation():
     """Test forward fill imputation"""
     # Create test DataFrame with missing values
