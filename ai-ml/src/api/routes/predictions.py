@@ -34,6 +34,60 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+def _extract_batch_prediction(result: Any, model_name: str) -> float:
+    """Extract a meaningful prediction value from per-engine result structures."""
+    if result is None:
+        return 0.5
+    if not isinstance(result, dict):
+        return 0.5
+
+    EXTRACTORS = {
+        "client_churn": lambda r: (
+            float(np.mean([s.get("churn_probability", 0.5)
+                          for s in (r.get("risk_scores") or [])
+                          if isinstance(s, dict)]))
+            if r.get("risk_scores") else 0.5
+        ),
+        "revenue_leak_detector": lambda r: (
+            min(1.0, r.get("total_potential_loss", 0) / 50000)
+            if r.get("total_potential_loss", 0) > 0 else 0.3
+        ),
+        "dynamic_pricing": lambda r: (
+            float(np.mean([
+                float(v["recommended_price"])
+                for v in (r.get("price_recommendations") or {}).values()
+                if isinstance(v, dict) and "recommended_price" in v
+            ]))
+            if r.get("price_recommendations") else 100.0
+        ),
+        "budget_optimizer": lambda r: (
+            float(np.mean([
+                v.get("allocated_amount", 0)
+                for v in (r.get("recommendations") or {}).values()
+                if isinstance(v, dict)
+            ]))
+            if r.get("recommendations") else 0.0
+        ),
+        "demand_forecaster": lambda r: (
+            float(np.mean([
+                v.get("forecast_value", 0)
+                for v in (r.get("forecast") or [])
+                if isinstance(v, dict)
+            ]))
+            if r.get("forecast") else 0.0
+        ),
+        "client_profitability": lambda r: (
+            float(r.get("prediction", 0.5))
+            if "prediction" in r else 0.5
+        ),
+    }
+
+    extractor = EXTRACTORS.get(model_name)
+    if extractor:
+        return extractor(result)
+    return result.get("prediction", 0.5)
+
+
 class PredictionRequest(BaseModel):
     """Base prediction request model"""
     data: Dict[str, Any] = Field(..., description="Input data for prediction")
@@ -267,9 +321,7 @@ async def batch_predict(
             data_df = pd.DataFrame(request.data) if request.data else pd.DataFrame()
             result = method(data_df)
         
-        prediction_value = 0.5
-        if result:
-            prediction_value = result.get('prediction', 0.5) if isinstance(result, dict) else 0.5
+        prediction_value = _extract_batch_prediction(result, model_name)
         
         formatted_predictions = [
             PredictionResponse(
