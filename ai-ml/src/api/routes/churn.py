@@ -4,8 +4,8 @@ Client churn prediction and prevention endpoints
 """
 
 import logging
+import time
 import numpy as np
-import pandas as pd
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -44,6 +44,7 @@ async def predict_client_churn(
         start_date = end_date - timedelta(days=request.timeframe_days)
         
         # Run churn prediction pipeline
+        start_time = time.perf_counter()
         result = await churn_predictor.run_full_pipeline(start_date=start_date, end_date=end_date)
         
         # Extract churn probability from pipeline results
@@ -84,7 +85,7 @@ async def predict_client_churn(
             model_version=model_version or "1.0.0",
             prediction_id="churn_" + str(datetime.now().timestamp()),
             timestamp=datetime.now(),
-            processing_time_ms=50.0,
+            processing_time_ms=(time.perf_counter() - start_time) * 1000,
             confidence=0.85 if return_confidence else None,
             churn_probability=churn_probability,
             risk_level=risk_level,
@@ -119,6 +120,7 @@ async def batch_predict_churn(
             raise HTTPException(status_code=400, detail="Batch data is required")
         
         # Run churn prediction pipeline
+        start_time = time.perf_counter()
         result = await churn_predictor.run_full_pipeline()
         
         # Extract churn probability from pipeline (or use defaults for each client)
@@ -150,7 +152,7 @@ async def batch_predict_churn(
                 model_version=model_version or "1.0.0",
                 prediction_id="churn_batch_" + str(i) + "_" + str(datetime.now().timestamp()),
                 timestamp=datetime.now(),
-                processing_time_ms=50.0,
+                processing_time_ms=(time.perf_counter() - start_time) * 1000,
                 confidence=0.85,
                 churn_probability=churn_probability,
                 risk_level=risk_level,

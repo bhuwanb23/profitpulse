@@ -4,6 +4,7 @@ Model inference and prediction endpoints
 """
 
 import logging
+import time
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
@@ -140,6 +141,7 @@ async def predict_profitability(
             "service_types": request.service_types or []
         }
         
+        start_time = time.perf_counter()
         prediction = await profitability_predictor.predict(
             client_data=prediction_data,
             model_type=model_version or "auto",
@@ -152,7 +154,7 @@ async def predict_profitability(
             model_version=model_version or prediction.get("model_type", "1.0.0"),
             prediction_id="prof_" + str(datetime.now().timestamp()),
             timestamp=datetime.fromisoformat(prediction["timestamp"]) if "timestamp" in prediction else datetime.now(),
-            processing_time_ms=prediction.get("prediction_time_ms", 50.0),
+            processing_time_ms=prediction.get("prediction_time_ms", (time.perf_counter() - start_time) * 1000),
             confidence=prediction.get("confidence_level", None)
         )
         
@@ -171,6 +173,7 @@ async def predict_churn(
         churn_predictor = ChurnPredictor()
         end_date = datetime.now()
         start_date = end_date - timedelta(days=90)
+        start_time = time.perf_counter()
         result = await churn_predictor.run_full_pipeline(start_date=start_date, end_date=end_date)
         
         churn_probability = 0.5
@@ -187,7 +190,7 @@ async def predict_churn(
             model_version=model_version or "1.0.0",
             prediction_id="churn_" + str(datetime.now().timestamp()),
             timestamp=datetime.now(),
-            processing_time_ms=50.0,
+            processing_time_ms=(time.perf_counter() - start_time) * 1000,
             confidence=0.85
         )
         
@@ -207,6 +210,7 @@ async def detect_revenue_leak(
         await revenue_leak_predictor.initialize()
         end_date = datetime.now()
         start_date = end_date - timedelta(days=request.time_period_days)
+        start_time = time.perf_counter()
         result = await revenue_leak_predictor.detect_revenue_leaks(start_date=start_date, end_date=end_date)
         
         leak_probability = 0.5
@@ -220,7 +224,7 @@ async def detect_revenue_leak(
             model_version=model_version or "1.0.0",
             prediction_id="leak_" + str(datetime.now().timestamp()),
             timestamp=datetime.now(),
-            processing_time_ms=50.0,
+            processing_time_ms=(time.perf_counter() - start_time) * 1000,
             confidence=0.85
         )
         
@@ -238,6 +242,7 @@ async def recommend_pricing(
     try:
         pricing_engine = DynamicPricingEngine()
         client_id = request.get("client_id")
+        start_time = time.perf_counter()
         result = await pricing_engine.run_complete_pricing_analysis(client_id=client_id)
         
         recommended_price = 100.0
@@ -254,7 +259,7 @@ async def recommend_pricing(
             model_version=model_version or "1.0.0",
             prediction_id="pricing_" + str(datetime.now().timestamp()),
             timestamp=datetime.now(),
-            processing_time_ms=50.0,
+            processing_time_ms=(time.perf_counter() - start_time) * 1000,
             confidence=0.85
         )
         
@@ -279,10 +284,12 @@ async def batch_predict(
         
         if is_async:
             method = getattr(engine, method_name)
+            start_time = time.perf_counter()
             result = await method()
         else:
             method = getattr(engine, method_name)
             data_df = pd.DataFrame(request.data) if request.data else pd.DataFrame()
+            start_time = time.perf_counter()
             result = method(data_df)
         
         prediction_value = _extract_batch_prediction(result, model_name)
@@ -294,7 +301,7 @@ async def batch_predict(
                 model_version=request.model_version or "1.0.0",
                 prediction_id=f"batch_{i}_{datetime.now().timestamp()}",
                 timestamp=datetime.now(),
-                processing_time_ms=50.0,
+                processing_time_ms=(time.perf_counter() - start_time) * 1000,
                 confidence=0.85
             )
             for i in range(len(request.data))
@@ -303,7 +310,7 @@ async def batch_predict(
         return BatchPredictionResponse(
             predictions=formatted_predictions,
             total_predictions=len(formatted_predictions),
-            processing_time_ms=50.0 * len(formatted_predictions),
+            processing_time_ms=(time.perf_counter() - start_time) * 1000,
             model_name=model_name,
             model_version=request.model_version or "1.0.0"
         )

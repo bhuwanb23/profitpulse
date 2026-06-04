@@ -4,6 +4,7 @@ Real-time anomaly detection and alerting endpoints
 """
 
 import logging
+import time
 import numpy as np
 import pandas as pd
 from datetime import datetime
@@ -48,6 +49,7 @@ async def detect_anomalies(
         }
         
         # Run anomaly detection (sync method, takes pd.DataFrame)
+        start_time = time.perf_counter()
         data_df = pd.DataFrame(request.data) if request.data else pd.DataFrame()
         result = anomaly_detector.detect_anomalies(data_df)
         
@@ -108,7 +110,7 @@ async def detect_anomalies(
             model_version=model_version or "1.0.0",
             prediction_id="anomaly_" + str(datetime.now().timestamp()),
             timestamp=datetime.now(),
-            processing_time_ms=50.0,
+            processing_time_ms=(time.perf_counter() - start_time) * 1000,
             confidence=0.85 if return_confidence else None,
             anomalies=mock_anomalies,
             severity_scores=mock_severity_scores,
@@ -143,6 +145,7 @@ async def batch_detect_anomalies(
             raise HTTPException(status_code=400, detail="Batch data is required")
         
         # Run anomaly detection on combined data
+        start_time = time.perf_counter()
         data_df = pd.DataFrame(detection_data_list) if detection_data_list else pd.DataFrame()
         result = anomaly_detector.detect_anomalies(data_df)
         
@@ -188,7 +191,7 @@ async def batch_detect_anomalies(
                 model_version=model_version or "1.0.0",
                 prediction_id="anomaly_batch_" + str(i) + "_" + str(datetime.now().timestamp()),
                 timestamp=datetime.now(),
-                processing_time_ms=50.0,
+                processing_time_ms=(time.perf_counter() - start_time) * 1000,
                 confidence=0.85,
                 anomalies=mock_anomalies,
                 severity_scores=mock_severity_scores,

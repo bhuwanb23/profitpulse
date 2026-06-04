@@ -4,6 +4,7 @@ Budget optimization and resource allocation endpoints
 """
 
 import logging
+import time
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -45,6 +46,7 @@ async def optimize_budget(
         }
         
         # Run complete budget analysis pipeline
+        start_time = time.perf_counter()
         result = await budget_optimizer.run_complete_budget_analysis(total_budget=request.current_budget)
         
         # Extract optimized allocation from pipeline results
@@ -68,7 +70,7 @@ async def optimize_budget(
             model_version=model_version or "1.0.0",
             prediction_id="budget_" + str(datetime.now().timestamp()),
             timestamp=datetime.now(),
-            processing_time_ms=50.0,
+            processing_time_ms=(time.perf_counter() - start_time) * 1000,
             confidence=confidence if return_confidence else None,
             optimized_allocation=optimized_allocation if isinstance(optimized_allocation, dict) else {},
             expected_roi_improvement=expected_roi_improvement,
@@ -103,6 +105,7 @@ async def batch_optimize_budgets(
             raise HTTPException(status_code=400, detail="Batch data is required")
         
         # Run complete budget analysis pipeline
+        start_time = time.perf_counter()
         result = await budget_optimizer.run_complete_budget_analysis(total_budget=1000000)
         
         # Extract allocation from pipeline
@@ -128,7 +131,7 @@ async def batch_optimize_budgets(
                 model_version=model_version or "1.0.0",
                 prediction_id="budget_batch_" + str(i) + "_" + str(datetime.now().timestamp()),
                 timestamp=datetime.now(),
-                processing_time_ms=50.0,
+                processing_time_ms=(time.perf_counter() - start_time) * 1000,
                 confidence=confidence,
                 optimized_allocation=default_allocation if isinstance(default_allocation, dict) else {},
                 expected_roi_improvement=expected_roi_improvement,

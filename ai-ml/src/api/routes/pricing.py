@@ -4,6 +4,7 @@ Dynamic pricing recommendation and optimization endpoints
 """
 
 import logging
+import time
 import numpy as np
 from datetime import datetime
 from typing import List, Dict, Any, Optional
@@ -42,6 +43,7 @@ async def recommend_pricing(
         client_id = request.client_profile.get("client_id") if isinstance(request.client_profile, dict) else None
         
         # Run complete pricing analysis pipeline
+        start_time = time.perf_counter()
         result = await pricing_engine.run_complete_pricing_analysis(client_id=client_id)
         
         # Extract recommended price from pipeline results
@@ -80,7 +82,7 @@ async def recommend_pricing(
             model_version=model_version or "1.0.0",
             prediction_id="pricing_" + str(datetime.now().timestamp()),
             timestamp=datetime.now(),
-            processing_time_ms=50.0,
+            processing_time_ms=(time.perf_counter() - start_time) * 1000,
             confidence=confidence if return_confidence else None,
             recommended_price=recommended_price,
             price_range=price_range,
@@ -116,6 +118,7 @@ async def batch_recommend_pricing(
             raise HTTPException(status_code=400, detail="Batch data is required")
         
         # Run complete pricing analysis pipeline
+        start_time = time.perf_counter()
         result = await pricing_engine.run_complete_pricing_analysis()
         
         # Extract recommended price from pipeline
@@ -153,7 +156,7 @@ async def batch_recommend_pricing(
                 model_version=model_version or "1.0.0",
                 prediction_id="pricing_batch_" + str(i) + "_" + str(datetime.now().timestamp()),
                 timestamp=datetime.now(),
-                processing_time_ms=50.0,
+                processing_time_ms=(time.perf_counter() - start_time) * 1000,
                 confidence=confidence,
                 recommended_price=recommended_price,
                 price_range=price_range,

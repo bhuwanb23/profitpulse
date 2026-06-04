@@ -4,6 +4,7 @@ Service demand forecasting and capacity planning endpoints
 """
 
 import logging
+import time
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -46,6 +47,7 @@ async def forecast_demand(
         }
         
         # Run complete demand analysis pipeline
+        start_time = time.perf_counter()
         result = await demand_forecaster.run_complete_demand_analysis(
             forecast_horizon=request.forecast_horizon
         )
@@ -96,7 +98,7 @@ async def forecast_demand(
             model_version=model_version or "1.0.0",
             prediction_id="demand_" + str(datetime.now().timestamp()),
             timestamp=datetime.now(),
-            processing_time_ms=50.0,
+            processing_time_ms=(time.perf_counter() - start_time) * 1000,
             confidence=confidence if return_confidence else None,
             forecast=mock_forecast,
             confidence_intervals=mock_confidence_intervals,
@@ -135,6 +137,7 @@ async def batch_forecast_demand(
             raise HTTPException(status_code=400, detail="Batch data is required")
         
         # Run complete demand analysis pipeline
+        start_time = time.perf_counter()
         result = await demand_forecaster.run_complete_demand_analysis(forecast_horizon=30)
         
         # Try to extract forecast from pipeline results
@@ -185,7 +188,7 @@ async def batch_forecast_demand(
                 model_version=model_version or "1.0.0",
                 prediction_id="demand_batch_" + str(i) + "_" + str(datetime.now().timestamp()),
                 timestamp=datetime.now(),
-                processing_time_ms=50.0,
+                processing_time_ms=(time.perf_counter() - start_time) * 1000,
                 confidence=confidence,
                 forecast=mock_forecast,
                 confidence_intervals=mock_confidence_intervals,

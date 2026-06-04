@@ -4,6 +4,7 @@ Revenue leak detection and recovery endpoints
 """
 
 import logging
+import time
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -43,6 +44,7 @@ async def detect_revenue_leak(
         start_date = end_date - timedelta(days=request.time_period_days)
         
         # Run revenue leak detection pipeline
+        start_time = time.perf_counter()
         result = await revenue_leak_predictor.detect_revenue_leaks(start_date=start_date, end_date=end_date)
         
         # Extract leak probability from pipeline results
@@ -84,7 +86,7 @@ async def detect_revenue_leak(
             model_version=model_version or "1.0.0",
             prediction_id="leak_" + str(datetime.now().timestamp()),
             timestamp=datetime.now(),
-            processing_time_ms=50.0,
+            processing_time_ms=(time.perf_counter() - start_time) * 1000,
             confidence=0.85 if return_confidence else None,
             leak_probability=leak_probability,
             leak_amount=estimated_leak_amount,
@@ -121,6 +123,7 @@ async def batch_detect_revenue_leaks(
             raise HTTPException(status_code=400, detail="Batch data is required")
         
         # Run revenue leak detection pipeline
+        start_time = time.perf_counter()
         result = await revenue_leak_predictor.detect_revenue_leaks()
         
         # Extract leak probability from pipeline
@@ -141,7 +144,7 @@ async def batch_detect_revenue_leaks(
                 model_version=model_version or "1.0.0",
                 prediction_id="leak_batch_" + str(i) + "_" + str(datetime.now().timestamp()),
                 timestamp=datetime.now(),
-                processing_time_ms=50.0,
+                processing_time_ms=(time.perf_counter() - start_time) * 1000,
                 confidence=0.85,
                 leak_probability=leak_probability,
                 leak_amount=estimated_leak_amount,
