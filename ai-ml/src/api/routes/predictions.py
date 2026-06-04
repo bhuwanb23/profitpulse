@@ -18,6 +18,7 @@ from ...models.budget_optimizer.budget_optimizer import BudgetOptimizer
 from ...models.demand_forecaster.demand_forecaster import DemandForecaster
 from ...models.anomaly_detector.anomaly_orchestrator import AnomalyDetectorOrchestrator
 from ...models.profitability_predictor.profitability_predictor import ProfitabilityPredictor
+from ..models.schemas import PredictionRequest, PredictionResponse, BatchPredictionRequest, BatchPredictionResponse
 
 # Model routing table: model_name -> (engine_class, pipeline_method, is_async)
 MODEL_ROUTING = {
@@ -86,43 +87,6 @@ def _extract_batch_prediction(result: Any, model_name: str) -> float:
     if extractor:
         return extractor(result)
     return result.get("prediction", 0.5)
-
-
-class PredictionRequest(BaseModel):
-    """Base prediction request model"""
-    data: Dict[str, Any] = Field(..., description="Input data for prediction")
-    model_version: Optional[str] = Field(None, description="Specific model version to use")
-    return_probabilities: bool = Field(False, description="Whether to return prediction probabilities")
-    return_confidence: bool = Field(False, description="Whether to return confidence scores")
-
-
-class PredictionResponse(BaseModel):
-    """Base prediction response model"""
-    prediction: Union[float, int, str, List[Any]]
-    model_name: str
-    model_version: str
-    prediction_id: str
-    timestamp: datetime
-    processing_time_ms: float
-    confidence: Optional[float] = None
-    probabilities: Optional[Dict[str, float]] = None
-
-
-class BatchPredictionRequest(BaseModel):
-    """Batch prediction request model"""
-    data: List[Dict[str, Any]] = Field(..., description="List of input data for predictions")
-    model_version: Optional[str] = Field(None, description="Specific model version to use")
-    return_probabilities: bool = Field(False, description="Whether to return prediction probabilities")
-    return_confidence: bool = Field(False, description="Whether to return confidence scores")
-
-
-class BatchPredictionResponse(BaseModel):
-    """Batch prediction response model"""
-    predictions: List[PredictionResponse]
-    total_predictions: int
-    processing_time_ms: float
-    model_name: str
-    model_version: str
 
 
 class ProfitabilityPredictionRequest(BaseModel):
