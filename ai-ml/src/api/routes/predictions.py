@@ -19,7 +19,7 @@ from ...models.budget_optimizer.budget_optimizer import BudgetOptimizer
 from ...models.demand_forecaster.demand_forecaster import DemandForecaster
 from ...models.anomaly_detector.anomaly_orchestrator import AnomalyDetectorOrchestrator
 from ...models.profitability_predictor.profitability_predictor import ProfitabilityPredictor
-from ..models.schemas import PredictionRequest, PredictionResponse, BatchPredictionRequest, BatchPredictionResponse
+from ..models.schemas import PredictionRequest, PredictionResponse, BatchPredictionRequest, BatchPredictionResponse, DynamicPricingRequest
 
 # Model routing table: model_name -> (engine_class, pipeline_method, is_async)
 MODEL_ROUTING = {
@@ -235,13 +235,13 @@ async def detect_revenue_leak(
 
 @router.post("/pricing", response_model=PredictionResponse)
 async def recommend_pricing(
-    request: Dict[str, Any],
+    request: DynamicPricingRequest,
     model_version: Optional[str] = Query(None, description="Specific model version to use")
 ):
     """Get dynamic pricing recommendations"""
     try:
         pricing_engine = DynamicPricingEngine()
-        client_id = request.get("client_id")
+        client_id = request.client_profile.get("client_id")
         start_time = time.perf_counter()
         result = await pricing_engine.run_complete_pricing_analysis(client_id=client_id)
         
