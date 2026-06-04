@@ -126,7 +126,7 @@ class ClientChurnPredictionResponse(PredictionResponse):
     """Client churn prediction response"""
     churn_probability: float = Field(..., description="Probability of churn")
     risk_level: str = Field("low", description="Risk level (low, medium, high)")
-    intervention_recommendations: List[str] = Field(default_factory=list, description="Recommended interventions")
+    intervention_recommendations: List[Dict[str, str]] = Field(default_factory=list, description="Recommended interventions")
 
 
 # Revenue Leak Detection Models
