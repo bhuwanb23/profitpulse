@@ -21,3 +21,10 @@ def engineer_features(df: pd.DataFrame, config: Dict) -> pd.DataFrame:
             labels=['Bronze', 'Silver', 'Gold', 'Platinum']
         )
     return result
+
+
+def one_hot_encoding(df, columns):
+    missing = [c for c in columns if c not in df.columns]
+    if missing:
+        raise ValueError(f"Columns not found in DataFrame: {missing}")
+    return pd.get_dummies(df, columns=columns, dtype=int)
