@@ -6,7 +6,7 @@ Client churn prediction and prevention endpoints
 import logging
 import numpy as np
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -39,14 +39,12 @@ async def predict_client_churn(
         # Initialize churn predictor
         churn_predictor = ChurnPredictor()
         
-        # Prepare data for prediction
-        prediction_data = {
-            "client_id": request.client_id,
-            **request.features
-        }
+        # Compute date range from request timeframe
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=request.timeframe_days)
         
         # Run churn prediction pipeline
-        result = await churn_predictor.run_full_pipeline()
+        result = await churn_predictor.run_full_pipeline(start_date=start_date, end_date=end_date)
         
         # Extract churn probability from pipeline results
         churn_probability = 0.5  # default fallback

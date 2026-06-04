@@ -6,7 +6,7 @@ Model inference and prediction endpoints
 import logging
 import numpy as np
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional, Union
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from pydantic import BaseModel, Field
@@ -151,7 +151,9 @@ async def predict_churn(
     """Predict client churn risk"""
     try:
         churn_predictor = ChurnPredictor()
-        result = await churn_predictor.run_full_pipeline()
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=90)
+        result = await churn_predictor.run_full_pipeline(start_date=start_date, end_date=end_date)
         
         churn_probability = 0.5
         if result and 'risk_scores' in result:
@@ -185,7 +187,9 @@ async def detect_revenue_leak(
     try:
         revenue_leak_predictor = RevenueLeakPredictor()
         await revenue_leak_predictor.initialize()
-        result = await revenue_leak_predictor.detect_revenue_leaks()
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=request.time_period_days)
+        result = await revenue_leak_predictor.detect_revenue_leaks(start_date=start_date, end_date=end_date)
         
         leak_probability = 0.5
         if result and result.get('status') == 'success':
@@ -215,7 +219,8 @@ async def recommend_pricing(
     """Get dynamic pricing recommendations"""
     try:
         pricing_engine = DynamicPricingEngine()
-        result = await pricing_engine.run_complete_pricing_analysis()
+        client_id = request.get("client_id")
+        result = await pricing_engine.run_complete_pricing_analysis(client_id=client_id)
         
         recommended_price = 100.0
         if result and result.get('status') == 'success':

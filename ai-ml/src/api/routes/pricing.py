@@ -38,16 +38,11 @@ async def recommend_pricing(
         # Initialize dynamic pricing engine
         pricing_engine = DynamicPricingEngine()
         
-        # Prepare data for pricing recommendation
-        pricing_data = {
-            "client_profile": request.client_profile,
-            "service_type": request.service_type,
-            "market_conditions": request.market_conditions,
-            "competitor_data": request.competitor_data
-        }
+        # Extract client_id from client_profile if available
+        client_id = request.client_profile.get("client_id") if isinstance(request.client_profile, dict) else None
         
         # Run complete pricing analysis pipeline
-        result = await pricing_engine.run_complete_pricing_analysis()
+        result = await pricing_engine.run_complete_pricing_analysis(client_id=client_id)
         
         # Extract recommended price from pipeline results
         recommended_price = 100.0  # default fallback

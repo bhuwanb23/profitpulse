@@ -4,7 +4,7 @@ Revenue leak detection and recovery endpoints
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -38,15 +38,12 @@ async def detect_revenue_leak(
         revenue_leak_predictor = RevenueLeakPredictor()
         await revenue_leak_predictor.initialize()
         
-        # Prepare data for detection
-        detection_data = {}
-        for item in request.billing_data:
-            detection_data.update(item)
-        for item in request.service_data:
-            detection_data.update(item)
+        # Compute date range from request time period
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=request.time_period_days)
         
         # Run revenue leak detection pipeline
-        result = await revenue_leak_predictor.detect_revenue_leaks()
+        result = await revenue_leak_predictor.detect_revenue_leaks(start_date=start_date, end_date=end_date)
         
         # Extract leak probability from pipeline results
         leak_probability = 0.5  # default fallback
