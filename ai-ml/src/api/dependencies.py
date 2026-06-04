@@ -9,7 +9,6 @@ from typing import Optional
 
 from src.utils.model_registry import ModelRegistry
 from src.utils.metrics_collector import MetricsCollector
-from src.utils.predictor import Predictor
 from src.utils.monitoring import MonitoringService
 from src.utils.admin import AdminService
 from src.utils.health_checker import HealthChecker
@@ -19,7 +18,6 @@ logger = logging.getLogger(__name__)
 # Global instances
 _model_registry: Optional[ModelRegistry] = None
 _metrics_collector: Optional[MetricsCollector] = None
-_predictor: Optional[Predictor] = None
 _monitoring_service: Optional[MonitoringService] = None
 _admin_service: Optional[AdminService] = None
 _health_checker: Optional[HealthChecker] = None
@@ -43,16 +41,6 @@ def get_metrics_collector() -> MetricsCollector:
         _metrics_collector = MetricsCollector()
         logger.info("Metrics collector initialized")
     return _metrics_collector
-
-
-@lru_cache()
-def get_predictor() -> Predictor:
-    """Get predictor instance"""
-    global _predictor
-    if _predictor is None:
-        _predictor = Predictor()
-        logger.info("Predictor initialized")
-    return _predictor
 
 
 @lru_cache()
@@ -87,7 +75,7 @@ def get_health_checker() -> HealthChecker:
 
 def cleanup_dependencies():
     """Cleanup all dependency instances"""
-    global _model_registry, _metrics_collector, _predictor
+    global _model_registry, _metrics_collector
     global _monitoring_service, _admin_service, _health_checker
     
     if _model_registry:
@@ -97,10 +85,6 @@ def cleanup_dependencies():
     if _metrics_collector:
         _metrics_collector.cleanup()
         _metrics_collector = None
-    
-    if _predictor:
-        _predictor.cleanup()
-        _predictor = None
     
     if _monitoring_service:
         _monitoring_service.cleanup()
