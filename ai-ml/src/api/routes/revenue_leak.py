@@ -40,10 +40,10 @@ async def detect_revenue_leak(
         
         # Prepare data for detection
         detection_data = {}
-        if isinstance(request.billing_data, dict):
-            detection_data.update(request.billing_data)
-        if isinstance(request.service_data, dict):
-            detection_data.update(request.service_data)
+        for item in request.billing_data:
+            detection_data.update(item)
+        for item in request.service_data:
+            detection_data.update(item)
         
         # Run revenue leak detection pipeline
         result = await revenue_leak_predictor.detect_revenue_leaks()
