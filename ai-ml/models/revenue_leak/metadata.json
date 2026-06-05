@@ -1,0 +1,10 @@
+{
+  "models": [
+    "isolation_forest",
+    "autoencoder",
+    "dbscan",
+    "one_class_svm",
+    "ensemble"
+  ],
+  "saved_at": "2026-06-05T09:46:49.153036"
+}
