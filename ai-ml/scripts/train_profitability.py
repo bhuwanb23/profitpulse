@@ -57,6 +57,30 @@ def _generate_synthetic_data(conn):
 
     random.seed(42)
 
+    # Create tables matching historical_data_collector expectations
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS clients (
+            id INTEGER PRIMARY KEY, name TEXT, industry TEXT,
+            contract_type TEXT, contract_value REAL,
+            start_date TEXT, end_date TEXT, is_active INTEGER
+        );
+        CREATE TABLE IF NOT EXISTS invoices (
+            client_id INTEGER, invoice_date TEXT,
+            total_amount REAL, status TEXT
+        );
+        CREATE TABLE IF NOT EXISTS tickets (
+            client_id INTEGER, time_spent REAL,
+            billable_hours REAL, hourly_rate REAL
+        );
+        CREATE TABLE IF NOT EXISTS client_services (
+            client_id INTEGER, service_id INTEGER,
+            custom_price REAL, quantity INTEGER
+        );
+        CREATE TABLE IF NOT EXISTS services (
+            id INTEGER PRIMARY KEY, category TEXT
+        );
+    """)
+
     industries = ["Technology", "Healthcare", "Finance", "Education", "Retail",
                   "Manufacturing", "Legal", "Real Estate", "Nonprofit", "Government"]
     contract_types = ["monthly", "quarterly", "annual", "biennial"]

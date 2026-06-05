@@ -44,7 +44,7 @@ class XGBoostProfitabilityModel:
         if not SKLEARN_AVAILABLE:
             raise ImportError("scikit-learn is required for this model but not available")
         
-        self.model = None
+        self.model = xgb.XGBRegressor()
         self.feature_names = None
         self.is_trained = False
         self.training_timestamp = None
@@ -68,8 +68,8 @@ class XGBoostProfitabilityModel:
             # Create a copy to avoid modifying original data
             features_df = data.copy()
             
-            # Remove non-feature columns
-            non_feature_columns = ['id', 'name', 'start_date', 'end_date']
+            # Remove non-feature columns (including target to prevent leakage)
+            non_feature_columns = ['id', 'name', 'start_date', 'end_date', 'profit_margin', 'profit']
             feature_columns = [col for col in features_df.columns if col not in non_feature_columns]
             
             # Select only feature columns
@@ -192,12 +192,9 @@ class XGBoostProfitabilityModel:
             
             # Ensure feature columns match training
             if self.feature_names:
-                # Add missing columns with zeros
                 for col in self.feature_names:
                     if col not in X.columns:
                         X[col] = 0
-                
-                # Remove extra columns
                 X = X[self.feature_names]
             
             # Make predictions

@@ -116,6 +116,10 @@ class ProfitabilityTrainingPipeline:
             X_train = X_train.fillna(0)
             X_val = X_val.fillna(0)
             
+            # Drop object columns (already one-hot encoded by feature engineering)
+            X_train = X_train.select_dtypes(exclude=['object'])
+            X_val = X_val.select_dtypes(exclude=['object'])
+            
             results = {}
             
             # 1. Train XGBoost model
@@ -134,7 +138,7 @@ class ProfitabilityTrainingPipeline:
             xgb_model.training_timestamp = datetime.now()
             
             # Evaluate XGBoost model
-            xgb_predictions = xgb_model.predict(validation_df)
+            xgb_predictions = tuned_xgb.predict(X_val)
             xgb_metrics = self.model_evaluator.calculate_all_metrics(y_val, xgb_predictions)
             
             results['xgboost'] = {
@@ -160,7 +164,7 @@ class ProfitabilityTrainingPipeline:
             rf_model.training_timestamp = datetime.now()
             
             # Evaluate Random Forest model
-            rf_predictions = rf_model.predict(validation_df)
+            rf_predictions = tuned_rf.predict(X_val)
             rf_metrics = self.model_evaluator.calculate_all_metrics(y_val, rf_predictions)
             
             results['random_forest'] = {
@@ -210,6 +214,9 @@ class ProfitabilityTrainingPipeline:
             # Handle missing values
             X_train = X_train.fillna(0)
             
+            # Drop object columns (already one-hot encoded by feature engineering)
+            X_train = X_train.select_dtypes(exclude=['object'])
+            
             cv_results = {}
             
             # Perform cross-validation for both models
@@ -254,13 +261,16 @@ class ProfitabilityTrainingPipeline:
             # Handle missing values
             X_test = X_test.fillna(0)
             
+            # Drop object columns (already one-hot encoded by feature engineering)
+            X_test = X_test.select_dtypes(exclude=['object'])
+            
             final_results = {}
             
             # Evaluate each model
             for model_name in ['xgboost', 'random_forest']:
                 if model_name in trained_models:
                     model = trained_models[model_name]['model']
-                    predictions = model.predict(test_df)
+                    predictions = model.model.predict(X_test)
                     metrics = self.model_evaluator.calculate_all_metrics(y_test, predictions)
                     evaluation = self.model_evaluator.evaluate_model_performance(
                         y_test, predictions, model_name.upper()
