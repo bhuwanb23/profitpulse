@@ -1,0 +1,6 @@
+{
+  "episodes": 100,
+  "q_table_size": 10,
+  "average_final_reward": 3188.86,
+  "timestamp": "2026-06-05 09:46:58.702316"
+}
