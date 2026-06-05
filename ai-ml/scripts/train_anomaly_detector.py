@@ -10,9 +10,9 @@ import logging
 import pandas as pd
 import numpy as np
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from models.anomaly_detector.anomaly_orchestrator import AnomalyDetectorOrchestrator
+from src.models.anomaly_detector.anomaly_orchestrator import AnomalyDetectorOrchestrator
 
 logging.basicConfig(
     level=logging.INFO,
