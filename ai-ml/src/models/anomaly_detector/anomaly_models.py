@@ -4,6 +4,8 @@ Implements various anomaly detection algorithms including One-Class SVM, DBSCAN,
 """
 
 import logging
+import os
+import pickle
 import numpy as np
 import pandas as pd
 from typing import Dict, List, Any, Optional, Tuple
@@ -171,6 +173,34 @@ class OneClassSVMModel:
             logger.error(f"Error getting anomaly scores from One-Class SVM model: {e}")
             return np.zeros(len(X)) if len(X) > 0 else np.array([])
 
+    def save(self, path: str) -> bool:
+        try:
+            data = {
+                'kernel': self.kernel, 'nu': self.nu, 'gamma': self.gamma,
+                'model': self.model, 'scaler': self.scaler,
+                'feature_names': self.feature_names, 'is_trained': self.is_trained,
+            }
+            with open(path, 'wb') as f:
+                pickle.dump(data, f)
+            logger.info(f"OneClassSVM saved to {path}")
+            return True
+        except Exception as e:
+            logger.error(f"Error saving OneClassSVM: {e}")
+            return False
+
+    def load(self, path: str) -> bool:
+        try:
+            with open(path, 'rb') as f:
+                data = pickle.load(f)
+            self.kernel = data['kernel']; self.nu = data['nu']; self.gamma = data['gamma']
+            self.model = data['model']; self.scaler = data['scaler']
+            self.feature_names = data['feature_names']; self.is_trained = data['is_trained']
+            logger.info(f"OneClassSVM loaded from {path}")
+            return True
+        except Exception as e:
+            logger.error(f"Error loading OneClassSVM: {e}")
+            return False
+
 
 class DBSCANModel:
     """DBSCAN clustering for anomaly detection"""
@@ -303,6 +333,34 @@ class DBSCANModel:
         except Exception as e:
             logger.error(f"Error getting anomaly scores from DBSCAN model: {e}")
             return np.zeros(len(X)) if len(X) > 0 else np.array([])
+
+    def save(self, path: str) -> bool:
+        try:
+            data = {
+                'eps': self.eps, 'min_samples': self.min_samples,
+                'model': self.model, 'scaler': self.scaler,
+                'feature_names': self.feature_names, 'is_trained': self.is_trained,
+            }
+            with open(path, 'wb') as f:
+                pickle.dump(data, f)
+            logger.info(f"DBSCAN saved to {path}")
+            return True
+        except Exception as e:
+            logger.error(f"Error saving DBSCAN: {e}")
+            return False
+
+    def load(self, path: str) -> bool:
+        try:
+            with open(path, 'rb') as f:
+                data = pickle.load(f)
+            self.eps = data['eps']; self.min_samples = data['min_samples']
+            self.model = data['model']; self.scaler = data['scaler']
+            self.feature_names = data['feature_names']; self.is_trained = data['is_trained']
+            logger.info(f"DBSCAN loaded from {path}")
+            return True
+        except Exception as e:
+            logger.error(f"Error loading DBSCAN: {e}")
+            return False
 
 
 class StatisticalAnomalyDetector:
@@ -537,6 +595,34 @@ class StatisticalAnomalyDetector:
         except Exception as e:
             logger.error(f"Error calculating percentile scores: {e}")
             return np.zeros(len(X))
+
+    def save(self, path: str) -> bool:
+        try:
+            data = {
+                'method': self.method, 'threshold': self.threshold,
+                'stats': self.stats, 'feature_names': self.feature_names,
+                'is_trained': self.is_trained,
+            }
+            with open(path, 'wb') as f:
+                pickle.dump(data, f)
+            logger.info(f"Statistical detector saved to {path}")
+            return True
+        except Exception as e:
+            logger.error(f"Error saving statistical detector: {e}")
+            return False
+
+    def load(self, path: str) -> bool:
+        try:
+            with open(path, 'rb') as f:
+                data = pickle.load(f)
+            self.method = data['method']; self.threshold = data['threshold']
+            self.stats = data['stats']; self.feature_names = data['feature_names']
+            self.is_trained = data['is_trained']
+            logger.info(f"Statistical detector loaded from {path}")
+            return True
+        except Exception as e:
+            logger.error(f"Error loading statistical detector: {e}")
+            return False
 
 
 class MachineLearningAnomalyDetector:
@@ -837,6 +923,49 @@ class MachineLearningAnomalyDetector:
             logger.error(f"Error getting Autoencoder scores: {e}")
             return np.zeros(len(X))
 
+    def save(self, path: str) -> bool:
+        try:
+            if self.model_type == 'autoencoder' and self.model is not None:
+                tf_model_path = path + '.tf'
+                self.model.save(tf_model_path)
+                data = {
+                    'model_type': self.model_type, 'scaler': self.scaler,
+                    'feature_names': self.feature_names, 'is_trained': self.is_trained,
+                    'tf_model_path': tf_model_path,
+                }
+            else:
+                data = {
+                    'model_type': self.model_type, 'model': self.model,
+                    'scaler': self.scaler, 'feature_names': self.feature_names,
+                    'is_trained': self.is_trained,
+                }
+            with open(path, 'wb') as f:
+                pickle.dump(data, f)
+            logger.info(f"ML detector saved to {path}")
+            return True
+        except Exception as e:
+            logger.error(f"Error saving ML detector: {e}")
+            return False
+
+    def load(self, path: str) -> bool:
+        try:
+            with open(path, 'rb') as f:
+                data = pickle.load(f)
+            self.model_type = data['model_type']
+            self.scaler = data['scaler']
+            self.feature_names = data['feature_names']
+            self.is_trained = data['is_trained']
+            if self.model_type == 'autoencoder' and 'tf_model_path' in data:
+                import tensorflow as tf
+                self.model = tf.keras.models.load_model(data['tf_model_path'])
+            else:
+                self.model = data.get('model')
+            logger.info(f"ML detector loaded from {path}")
+            return True
+        except Exception as e:
+            logger.error(f"Error loading ML detector: {e}")
+            return False
+
 
 class EnsembleAnomalyDetector:
     """Ensemble anomaly detection combining multiple models"""
@@ -1098,6 +1227,34 @@ class EnsembleAnomalyDetector:
         except Exception as e:
             logger.error(f"Error getting model contributions: {e}")
             return {}
+
+    def save(self, path: str) -> bool:
+        try:
+            data = {
+                'voting_method': self.voting_method, 'weights': self.weights,
+                'feature_names': self.feature_names, 'is_trained': self.is_trained,
+            }
+            with open(path, 'wb') as f:
+                pickle.dump(data, f)
+            logger.info(f"Ensemble detector saved to {path}")
+            return True
+        except Exception as e:
+            logger.error(f"Error saving ensemble detector: {e}")
+            return False
+
+    def load(self, path: str) -> bool:
+        try:
+            with open(path, 'rb') as f:
+                data = pickle.load(f)
+            self.voting_method = data['voting_method']
+            self.weights = data['weights']
+            self.feature_names = data['feature_names']
+            self.is_trained = data['is_trained']
+            logger.info(f"Ensemble detector loaded from {path}")
+            return True
+        except Exception as e:
+            logger.error(f"Error loading ensemble detector: {e}")
+            return False
 
 
 # Global instances for easy access

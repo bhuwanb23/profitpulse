@@ -9,7 +9,9 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime, timedelta
 import asyncio
+import numpy as np
 import pandas as pd
+import joblib
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -224,6 +226,71 @@ class ChurnPredictor:
             logger.error(f"Error training models: {e}")
             return False
     
+    def save_models(self, output_dir: str) -> bool:
+        """
+        Save all trained models to disk
+
+        Args:
+            output_dir: Directory to save models to
+
+        Returns:
+            Boolean indicating success
+        """
+        try:
+            output_path = Path(output_dir)
+            output_path.mkdir(parents=True, exist_ok=True)
+
+            for name, model in self.models.items():
+                filepath = output_path / f"{name}.pkl"
+                joblib.dump(model, filepath)
+                self.logger.info(f"Saved {name} to {filepath}")
+
+            metadata = {
+                'is_trained': self.is_trained,
+                'feature_columns': self.feature_columns
+            }
+            joblib.dump(metadata, output_path / "metadata.pkl")
+
+            self.logger.info(f"All models saved to {output_dir}")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Error saving models: {e}")
+            return False
+
+    def load_models(self, model_dir: str) -> bool:
+        """
+        Load trained models from disk
+
+        Args:
+            model_dir: Directory to load models from
+
+        Returns:
+            Boolean indicating success
+        """
+        try:
+            model_path = Path(model_dir)
+
+            metadata_path = model_path / "metadata.pkl"
+            if metadata_path.exists():
+                metadata = joblib.load(metadata_path)
+                self.is_trained = metadata.get('is_trained', False)
+                self.feature_columns = metadata.get('feature_columns', [])
+
+            model_names = ['logistic_regression', 'neural_network', 'xgboost', 'random_forest', 'ensemble']
+            for name in model_names:
+                filepath = model_path / f"{name}.pkl"
+                if filepath.exists():
+                    self.models[name] = joblib.load(filepath)
+                    self.logger.info(f"Loaded {name} from {filepath}")
+
+            self.logger.info(f"All models loaded from {model_dir}")
+            return len(self.models) > 0
+
+        except Exception as e:
+            self.logger.error(f"Error loading models: {e}")
+            return False
+
     def predict_churn(self, features: pd.DataFrame) -> pd.DataFrame:
         """
         Predict churn for clients

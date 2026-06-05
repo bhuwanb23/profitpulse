@@ -9,6 +9,8 @@ import pandas as pd
 from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime, timedelta
 import asyncio
+import os
+import pickle
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -628,6 +630,195 @@ class DemandForecaster:
             return "Significant demand forecasted - monitor resource utilization closely"
         else:
             return "Demand levels stable - maintain current resource allocation"
+
+
+    def save_models(self, output_dir: str) -> Dict[str, bool]:
+        """
+        Save all trained models to disk.
+
+        Args:
+            output_dir: Directory path to save models into
+
+        Returns:
+            Dict mapping model name -> whether it was saved successfully
+        """
+        os.makedirs(output_dir, exist_ok=True)
+        results = {}
+
+        # Save LSTM
+        try:
+            lstm_dir = os.path.join(output_dir, 'lstm')
+            os.makedirs(lstm_dir, exist_ok=True)
+            if self.lstm_forecaster is not None and self.lstm_forecaster.model is not None:
+                self.lstm_forecaster.model.save(os.path.join(lstm_dir, 'model.keras'))
+                if self.lstm_forecaster.scaler is not None:
+                    with open(os.path.join(lstm_dir, 'scaler.pkl'), 'wb') as f:
+                        pickle.dump(self.lstm_forecaster.scaler, f)
+                config = {
+                    'sequence_length': self.lstm_forecaster.sequence_length,
+                    'epochs': self.lstm_forecaster.epochs,
+                    'batch_size': self.lstm_forecaster.batch_size,
+                }
+                with open(os.path.join(lstm_dir, 'config.pkl'), 'wb') as f:
+                    pickle.dump(config, f)
+                results['lstm'] = True
+                logger.info(f"LSTM model saved to {lstm_dir}")
+            else:
+                results['lstm'] = False
+                logger.warning("LSTM model not available for saving")
+        except Exception as e:
+            logger.error(f"Error saving LSTM model: {e}")
+            results['lstm'] = False
+
+        # Save ARIMA
+        try:
+            arima_dir = os.path.join(output_dir, 'arima')
+            os.makedirs(arima_dir, exist_ok=True)
+            if self.arima_forecaster is not None and self.arima_forecaster.model is not None:
+                fitted = self.arima_forecaster.model
+                with open(os.path.join(arima_dir, 'model.pkl'), 'wb') as f:
+                    pickle.dump(fitted, f)
+                config = {'order': self.arima_forecaster.order}
+                with open(os.path.join(arima_dir, 'config.pkl'), 'wb') as f:
+                    pickle.dump(config, f)
+                results['arima'] = True
+                logger.info(f"ARIMA model saved to {arima_dir}")
+            else:
+                results['arima'] = False
+                logger.warning("ARIMA model not available for saving")
+        except Exception as e:
+            logger.error(f"Error saving ARIMA model: {e}")
+            results['arima'] = False
+
+        # Save Prophet
+        try:
+            prophet_dir = os.path.join(output_dir, 'prophet')
+            os.makedirs(prophet_dir, exist_ok=True)
+            if self.prophet_forecaster is not None and self.prophet_forecaster.model is not None:
+                with open(os.path.join(prophet_dir, 'model.pkl'), 'wb') as f:
+                    pickle.dump(self.prophet_forecaster.model, f)
+                results['prophet'] = True
+                logger.info(f"Prophet model saved to {prophet_dir}")
+            else:
+                results['prophet'] = False
+                logger.warning("Prophet model not available for saving")
+        except Exception as e:
+            logger.error(f"Error saving Prophet model: {e}")
+            results['prophet'] = False
+
+        # Save Ensemble
+        try:
+            ensemble_dir = os.path.join(output_dir, 'ensemble')
+            os.makedirs(ensemble_dir, exist_ok=True)
+            if self.ensemble_forecaster is not None:
+                with open(os.path.join(ensemble_dir, 'ensemble.pkl'), 'wb') as f:
+                    pickle.dump(self.ensemble_forecaster, f)
+                results['ensemble'] = True
+                logger.info(f"Ensemble state saved to {ensemble_dir}")
+            else:
+                results['ensemble'] = False
+                logger.warning("Ensemble forecaster not available for saving")
+        except Exception as e:
+            logger.error(f"Error saving Ensemble state: {e}")
+            results['ensemble'] = False
+
+        return results
+
+    def load_models(self, model_dir: str) -> bool:
+        """
+        Load previously saved models from disk and attach them to the
+        running forecaster instances.
+
+        Args:
+            model_dir: Directory path where models were saved
+
+        Returns:
+            True if at least one model was loaded successfully
+        """
+        loaded_any = False
+
+        # Load LSTM
+        try:
+            lstm_dir = os.path.join(model_dir, 'lstm')
+            if os.path.isdir(lstm_dir) and self.lstm_forecaster is not None:
+                config_path = os.path.join(lstm_dir, 'config.pkl')
+                scaler_path = os.path.join(lstm_dir, 'scaler.pkl')
+                model_path = os.path.join(lstm_dir, 'model.keras')
+
+                if os.path.exists(config_path):
+                    with open(config_path, 'rb') as f:
+                        cfg = pickle.load(f)
+                    self.lstm_forecaster.sequence_length = cfg.get('sequence_length', 60)
+                    self.lstm_forecaster.epochs = cfg.get('epochs', 50)
+                    self.lstm_forecaster.batch_size = cfg.get('batch_size', 32)
+
+                if os.path.exists(scaler_path):
+                    with open(scaler_path, 'rb') as f:
+                        self.lstm_forecaster.scaler = pickle.load(f)
+
+                if os.path.exists(model_path):
+                    try:
+                        import tensorflow as tf
+                        self.lstm_forecaster.model = tf.keras.models.load_model(model_path)
+                        self.lstm_forecaster.available = True
+                        loaded_any = True
+                        logger.info(f"LSTM model loaded from {model_path}")
+                    except ImportError:
+                        logger.warning("TensorFlow not available to load LSTM model")
+        except Exception as e:
+            logger.error(f"Error loading LSTM model: {e}")
+
+        # Load ARIMA
+        try:
+            arima_dir = os.path.join(model_dir, 'arima')
+            if os.path.isdir(arima_dir) and self.arima_forecaster is not None:
+                model_path = os.path.join(arima_dir, 'model.pkl')
+                config_path = os.path.join(arima_dir, 'config.pkl')
+
+                if os.path.exists(config_path):
+                    with open(config_path, 'rb') as f:
+                        cfg = pickle.load(f)
+                    self.arima_forecaster.order = cfg.get('order', (1, 1, 1))
+
+                if os.path.exists(model_path):
+                    with open(model_path, 'rb') as f:
+                        self.arima_forecaster.model = pickle.load(f)
+                    self.arima_forecaster.available = True
+                    loaded_any = True
+                    logger.info(f"ARIMA model loaded from {model_path}")
+        except Exception as e:
+            logger.error(f"Error loading ARIMA model: {e}")
+
+        # Load Prophet
+        try:
+            prophet_dir = os.path.join(model_dir, 'prophet')
+            if os.path.isdir(prophet_dir) and self.prophet_forecaster is not None:
+                model_path = os.path.join(prophet_dir, 'model.pkl')
+                if os.path.exists(model_path):
+                    with open(model_path, 'rb') as f:
+                        self.prophet_forecaster.model = pickle.load(f)
+                    self.prophet_forecaster.available = True
+                    loaded_any = True
+                    logger.info(f"Prophet model loaded from {model_path}")
+        except Exception as e:
+            logger.error(f"Error loading Prophet model: {e}")
+
+        # Load Ensemble
+        try:
+            ensemble_dir = os.path.join(model_dir, 'ensemble')
+            if os.path.isdir(ensemble_dir) and self.ensemble_forecaster is not None:
+                ensemble_path = os.path.join(ensemble_dir, 'ensemble.pkl')
+                if os.path.exists(ensemble_path):
+                    with open(ensemble_path, 'rb') as f:
+                        restored = pickle.load(f)
+                    self.ensemble_forecaster.models = restored.models
+                    self.ensemble_forecaster.weights = restored.weights
+                    loaded_any = True
+                    logger.info(f"Ensemble state loaded from {ensemble_path}")
+        except Exception as e:
+            logger.error(f"Error loading Ensemble state: {e}")
+
+        return loaded_any
 
 
 # Global instance for easy access

@@ -4,6 +4,8 @@ Coordinates all components of the dynamic pricing system
 """
 
 import logging
+import json
+import os
 import numpy as np
 import pandas as pd
 from typing import Dict, List, Any, Optional, Tuple
@@ -468,6 +470,92 @@ class DynamicPricingEngine:
             logger.error(f"Error optimizing pricing with RL: {e}")
             return {}
     
+    def save_models(self, output_dir: str):
+        """
+        Save trained RL models (Q-table and bandit agent) to disk.
+
+        Args:
+            output_dir: Directory path to save models into
+        """
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Save Q-table
+        if self.q_learning_agent is not None:
+            q_table_dict = {}
+            for state, actions in self.q_learning_agent.q_table.items():
+                q_table_dict[state] = {str(k): float(v) for k, v in actions.items()}
+            q_path = os.path.join(output_dir, "q_table.json")
+            with open(q_path, "w") as f:
+                json.dump(q_table_dict, f, indent=2)
+            logger.info(f"Q-table saved ({len(q_table_dict)} states) to {q_path}")
+
+        # Save multi-armed bandit agent
+        if self.multi_armed_bandit_agent is not None:
+            np.save(os.path.join(output_dir, "bandit_rewards.npy"), self.multi_armed_bandit_agent.rewards)
+            np.save(os.path.join(output_dir, "bandit_counts.npy"), self.multi_armed_bandit_agent.counts)
+            np.save(os.path.join(output_dir, "bandit_values.npy"), self.multi_armed_bandit_agent.values)
+            bandit_params = {
+                "n_arms": self.multi_armed_bandit_agent.n_arms,
+                "learning_rate": self.multi_armed_bandit_agent.learning_rate,
+                "temperature": self.multi_armed_bandit_agent.temperature,
+            }
+            bp_path = os.path.join(output_dir, "bandit_params.json")
+            with open(bp_path, "w") as f:
+                json.dump(bandit_params, f, indent=2)
+            logger.info(f"Bandit agent saved to {output_dir}")
+
+        logger.info(f"All models saved to {output_dir}")
+
+    def load_models(self, model_dir: str) -> bool:
+        """
+        Load trained RL models (Q-table and bandit agent) from disk.
+
+        Args:
+            model_dir: Directory path to load models from
+
+        Returns:
+            True if at least one model was loaded successfully, False otherwise
+        """
+        loaded_any = False
+        try:
+            # Load Q-table
+            if self.q_learning_agent is not None:
+                q_path = os.path.join(model_dir, "q_table.json")
+                if os.path.exists(q_path):
+                    with open(q_path, "r") as f:
+                        q_table_dict = json.load(f)
+                    for state, actions in q_table_dict.items():
+                        for action_str, q_value in actions.items():
+                            self.q_learning_agent.q_table[state][float(action_str)] = q_value
+                    logger.info(f"Q-table loaded ({len(q_table_dict)} states) from {q_path}")
+                    loaded_any = True
+
+            # Load multi-armed bandit agent
+            if self.multi_armed_bandit_agent is not None:
+                for key in ("rewards", "counts", "values"):
+                    path = os.path.join(model_dir, f"bandit_{key}.npy")
+                    if os.path.exists(path):
+                        setattr(self.multi_armed_bandit_agent, key, np.load(path))
+                        loaded_any = True
+                bp_path = os.path.join(model_dir, "bandit_params.json")
+                if os.path.exists(bp_path):
+                    with open(bp_path, "r") as f:
+                        params = json.load(f)
+                    self.multi_armed_bandit_agent.n_arms = params.get("n_arms", self.multi_armed_bandit_agent.n_arms)
+                    self.multi_armed_bandit_agent.learning_rate = params.get("learning_rate", self.multi_armed_bandit_agent.learning_rate)
+                    self.multi_armed_bandit_agent.temperature = params.get("temperature", self.multi_armed_bandit_agent.temperature)
+                    loaded_any = True
+
+            if loaded_any:
+                logger.info(f"Models loaded from {model_dir}")
+            else:
+                logger.warning(f"No model files found in {model_dir}")
+            return loaded_any
+
+        except Exception as e:
+            logger.error(f"Error loading models from {model_dir}: {e}")
+            return False
+
     async def run_complete_pricing_analysis(self, client_id: Optional[str] = None) -> Dict[str, Any]:
         """
         Run complete pricing analysis pipeline

@@ -93,6 +93,81 @@ class RevenueLeakPredictor:
             logger.error(f"Error initializing Revenue Leak Predictor: {e}")
             raise
     
+    def save_models(self, output_dir: str) -> bool:
+        """
+        Save all trained anomaly detection models to disk
+
+        Args:
+            output_dir: Directory to save models to
+
+        Returns:
+            Boolean indicating success
+        """
+        import json
+        import os
+        import pickle
+        try:
+            os.makedirs(output_dir, exist_ok=True)
+            for name, model in self.anomaly_models.items():
+                filepath = os.path.join(output_dir, f"{name}.pkl")
+                with open(filepath, 'wb') as f:
+                    pickle.dump(model, f)
+                self.logger.info(f"Saved {name} model to {filepath}")
+            metadata = {
+                'models': list(self.anomaly_models.keys()),
+                'saved_at': datetime.now().isoformat()
+            }
+            with open(os.path.join(output_dir, 'metadata.json'), 'w') as f:
+                json.dump(metadata, f, indent=2)
+            self.logger.info(f"All models saved to {output_dir}")
+            return True
+        except Exception as e:
+            self.logger.error(f"Error saving models: {e}")
+            return False
+
+    def load_models(self, model_dir: str) -> bool:
+        """
+        Load trained anomaly detection models from disk
+
+        Args:
+            model_dir: Directory containing saved models
+
+        Returns:
+            Boolean indicating success
+        """
+        import json
+        import os
+        import pickle
+        try:
+            meta_path = os.path.join(model_dir, 'metadata.json')
+            if os.path.exists(meta_path):
+                with open(meta_path, 'r') as f:
+                    metadata = json.load(f)
+                model_names = metadata.get('models', [])
+            else:
+                model_names = ['isolation_forest', 'autoencoder', 'dbscan', 'one_class_svm', 'ensemble']
+            loaded_count = 0
+            for name in model_names:
+                filepath = os.path.join(model_dir, f"{name}.pkl")
+                if os.path.exists(filepath):
+                    with open(filepath, 'rb') as f:
+                        model = pickle.load(f)
+                    self.anomaly_models[name] = model
+                    loaded_count += 1
+                    self.logger.info(f"Loaded {name} model from {filepath}")
+                else:
+                    self.logger.warning(f"Model file not found: {filepath}")
+            if loaded_count > 0:
+                self.is_initialized = True
+                self.logger.info(f"Loaded {loaded_count}/{len(model_names)} models from {model_dir}")
+                return True
+            else:
+                self.logger.error(f"No models found in {model_dir}")
+                return False
+        except Exception as e:
+            self.logger.error(f"Error loading models: {e}")
+            return False
+
     async def detect_revenue_leaks(self, start_date: Optional[datetime] = None, 
                                  end_date: Optional[datetime] = None,
                                  client_ids: Optional[List[str]] = None) -> Dict[str, Any]:

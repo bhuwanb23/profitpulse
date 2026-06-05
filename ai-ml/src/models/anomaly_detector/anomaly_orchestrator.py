@@ -4,6 +4,7 @@ Coordinates all components of the anomaly detection system
 """
 
 import logging
+import os
 import numpy as np
 import pandas as pd
 from typing import Dict, List, Any, Optional, Tuple
@@ -129,7 +130,42 @@ class AnomalyDetectorOrchestrator:
         except Exception as e:
             logger.error(f"Error training models: {e}")
             return False
-    
+
+    def save_models(self, output_dir: str) -> bool:
+        try:
+            os.makedirs(output_dir, exist_ok=True)
+            svm_ok = self.one_class_svm.save(os.path.join(output_dir, 'one_class_svm.pkl'))
+            dbscan_ok = self.dbscan.save(os.path.join(output_dir, 'dbscan.pkl'))
+            stat_ok = self.statistical_detector.save(os.path.join(output_dir, 'statistical.pkl'))
+            ml_ok = self.ml_detector.save(os.path.join(output_dir, 'ml_detector.pkl'))
+            ensemble_ok = self.ensemble_detector.save(os.path.join(output_dir, 'ensemble.pkl'))
+            success = svm_ok and dbscan_ok and stat_ok and ml_ok and ensemble_ok
+            if success:
+                logger.info(f"All models saved to {output_dir}")
+            else:
+                logger.warning("Some models failed to save")
+            return success
+        except Exception as e:
+            logger.error(f"Error saving models: {e}")
+            return False
+
+    def load_models(self, model_dir: str) -> bool:
+        try:
+            svm_ok = self.one_class_svm.load(os.path.join(model_dir, 'one_class_svm.pkl'))
+            dbscan_ok = self.dbscan.load(os.path.join(model_dir, 'dbscan.pkl'))
+            stat_ok = self.statistical_detector.load(os.path.join(model_dir, 'statistical.pkl'))
+            ml_ok = self.ml_detector.load(os.path.join(model_dir, 'ml_detector.pkl'))
+            ensemble_ok = self.ensemble_detector.load(os.path.join(model_dir, 'ensemble.pkl'))
+            success = svm_ok and dbscan_ok and stat_ok and ml_ok and ensemble_ok
+            if success:
+                logger.info(f"All models loaded from {model_dir}")
+            else:
+                logger.warning("Some models failed to load")
+            return success
+        except Exception as e:
+            logger.error(f"Error loading models: {e}")
+            return False
+
     async def start_real_time_detection(self):
         """
         Start real-time anomaly detection
