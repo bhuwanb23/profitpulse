@@ -33,10 +33,16 @@ class TestDynamicPricingEngine(unittest.TestCase):
             from dynamic_pricing.dynamic_pricing_engine import DynamicPricingEngine
             engine = DynamicPricingEngine()
             
-            # Check that components are initialized as None
+            # Lazy-initialized components (populated on demand)
             self.assertIsNone(engine.data_preparator)
             self.assertIsNone(engine.q_learning_agent)
-            self.assertIsNone(engine.price_recommendation_engine)
+            
+            # Factory-initialized components (Phase 2.3 sync wiring)
+            self.assertIsNotNone(engine.price_recommendation_engine)
+            self.assertIsNotNone(engine.roi_calculator)
+            self.assertIsNotNone(engine.reward_function)
+            self.assertIsNotNone(engine.market_trend_analyzer)
+            self.assertIsNotNone(engine.client_acceptance_predictor)
         except ImportError:
             self.skipTest("Dynamic Pricing Engine not available")
 

@@ -40,8 +40,21 @@ except ImportError as e:
 def create_test_client_data():
     """Create test client data"""
     return {
-        'client_id': 'test_client_1',
+        'id': 'test_client_1',
+        'name': 'Test Client',
         'contract_value': 50000.0,
+        'total_revenue': 45000.0,
+        'total_costs': 30000.0,
+        'profit': 15000.0,
+        'profit_margin': 0.33,
+        'service_count': 5,
+        'total_service_value': 20000.0,
+        'total_quantity': 20,
+        'industry': 'Technology',
+        'contract_type': 'monthly',
+        'start_date': '2024-01-01',
+        'end_date': '2025-01-01',
+        'is_active': True,
         'hours_logged': 100.0,
         'billing_amount': 45000.0,
         'ticket_count': 20,
@@ -56,7 +69,7 @@ def test_profitability_predictor_initialization():
     """Test profitability predictor initialization"""
     predictor = ProfitabilityPredictor()
     assert predictor.model_path == "./models"
-    assert predictor.db_path == "../../database/superhack.db"
+    assert predictor.db_path.endswith(("database/superhack.db", "database\\superhack.db"))
     assert predictor.xgboost_model is None
     assert predictor.random_forest_model is None
     assert predictor.feature_names == []
